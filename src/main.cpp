@@ -1,5 +1,7 @@
 #include <SDL3/SDL.h>
 #include <glad/gl.h>
+#include <stb_image.h>
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -7,6 +9,8 @@
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
+
+#define FLIP_TEXTURE true
 
 std::string ReadFile(const std::string& path) {
     std::ifstream file(path);
@@ -68,6 +72,10 @@ int main(int argc, char* argv[]) {
     }
 
     glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    // Blending
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // GPU info for test
     std::cout << "Vendor:   " << glGetString(GL_VENDOR) << '\n';
@@ -138,11 +146,11 @@ int main(int argc, char* argv[]) {
     glDeleteShader(fragmentShader);
 
     float vertices[] = {
-        // pos          // color
-        -0.5f,  0.5f,   1,0,0,
-        -0.5f, -0.5f,   0,1,0,
-         0.5f, -0.5f,   0,0,1,
-         0.5f,  0.5f,   1,1,0
+        // pos           // color               // texture coord
+        -0.5f,  0.5f,    1.0f,  0.0f,  0.0f,    0.0f, 1.0f,
+        -0.5f, -0.5f,    0.0f,  1.0f,  0.0f,    0.0f, 0.0f,
+         0.5f, -0.5f,    0.0f,  0.0f,  1.0f,    1.0f, 0.0f,
+         0.5f,  0.5f,    1.0f,  1.0f,  0.0f,    1.0f, 1.0f
     };
 
     unsigned int indices[] = {
@@ -150,10 +158,11 @@ int main(int argc, char* argv[]) {
         2, 3, 0
     };
 
-    // VAO VBO EBO
+    // VAO VBO EBO STB
     GLuint vao;
     GLuint vbo;
     GLuint ebo;
+    GLuint texture;
 
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
@@ -180,42 +189,117 @@ int main(int argc, char* argv[]) {
         GL_STATIC_DRAW
     );
 
+    // pos (vec2)
     glVertexAttribPointer(
         0,
         2,
         GL_FLOAT,
         GL_FALSE,
-        5 * sizeof(float),
+        7 * sizeof(float),
         nullptr
     );
     glEnableVertexAttribArray(0);
 
+    // color (vec3)
     glVertexAttribPointer(
         1,
         3,
         GL_FLOAT,
         GL_FALSE,
-        5 * sizeof(float),
+        7 * sizeof(float),
         reinterpret_cast<void*>(2 * sizeof(float))
     );
     glEnableVertexAttribArray(1);
 
+    // texture coord (vec2)
+    glVertexAttribPointer(
+        2,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        7 * sizeof(float),
+        reinterpret_cast<void*>(5 * sizeof(float))
+    );
+    glEnableVertexAttribArray(2);
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+
+    // Texture
+
+    // Flip texture
+    stbi_set_flip_vertically_on_load(FLIP_TEXTURE);
+
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    // Parameteri
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    /*
+        Default Texture:
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+        Pixel Texture:
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    */
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    int texture_width, texture_height, nrChannels;
+    unsigned char* data = stbi_load("../assets/textures/test.png", &texture_width, &texture_height, &nrChannels, 0);
+    if (data) {
+        std::cout << "[OK] Texture: \"../assets/textures/test.png\" loaded successfully.\n";
+
+        // Format RGB or RGBA
+        GLenum format = (nrChannels == 4) ? GL_RGBA : GL_RGB;
+
+        glTexImage2D(GL_TEXTURE_2D, 0, format, texture_width, texture_height, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        stbi_image_free(data);
+    } else {
+        std::cerr << "[ERROR] Could not load texture: \"../assets/textures/test.png\". Using fallback checkerboard.\n";
+
+        unsigned char fallbackPixels[4 * 4] = {
+            255, 0, 255, 255,  // 0 0 purple
+              0, 0,   0, 255,  // 1 0 black
+              0, 0,   0, 255,  // 0 1 black
+            255, 0, 255, 255   // 1 1 purple
+        };
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, fallbackPixels);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
 
     // Main
     bool running = true;
     SDL_Event event;
     while (running) {
         while (SDL_PollEvent(&event)) {
-            // Exit
-            if (event.type == SDL_EVENT_QUIT)
+            if (event.type == SDL_EVENT_QUIT) // exit
                 running = false;
         }
 
+        int w, h;
+        SDL_GetWindowSize(window, &w, &h);
+        glViewport(0, 0, w, h);
+
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        // Shader
         glUseProgram(shaderProgram);
+
+        // Uniform
+        float aspect = static_cast<float>(h) / static_cast<float>(w);
+        glUniform1f(glGetUniformLocation(shaderProgram, "aspect"), aspect);
+
+        // Drawing
+        glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(vao);
 
         glDrawElements(
@@ -229,10 +313,11 @@ int main(int argc, char* argv[]) {
     }
 
     // Clear
-    // VAO VBO EBO
+    // VAO VBO EBO STB
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
     glDeleteBuffers(1, &ebo);
+    glDeleteTextures(1, &texture);
 
     // ShaderProgram
     glDeleteProgram(shaderProgram);
