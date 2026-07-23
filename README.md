@@ -100,6 +100,7 @@ Shaders are loaded from external GLSL files, compiled, linked into a shader prog
 - [ ] Camera
 - [ ] Model loading
 - [ ] Renderer abstraction
+- [ ] And much more...
 
 ## About
 
