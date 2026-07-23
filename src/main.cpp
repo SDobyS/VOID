@@ -1,14 +1,28 @@
 #include <SDL3/SDL.h>
 #include <glad/gl.h>
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 #define WINDOW_WIDTH 1280
 #define WINDOW_HEIGHT 720
 
+std::string ReadFile(const std::string& path) {
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        std::cerr << "[ERROR] Failed to open file: " << path << '\n';
+        return {};
+    }
+    std::stringstream ss;
+    ss << file.rdbuf();
+    return ss.str();
+}
+
 int main(int argc, char* argv[]) {
     // SDL3 Init
     if (!SDL_Init(SDL_INIT_VIDEO)) {
-        std::cout << "SDL could not initialize! SDL_Error: " << SDL_GetError() << '\n';
+        std::cerr << "[ERROR] SDL could not initialize! SDL_Error: " << SDL_GetError() << '\n';
         return 1;
     }
 
@@ -22,7 +36,7 @@ int main(int argc, char* argv[]) {
     // Create Window with OpenGL
     SDL_Window* window = SDL_CreateWindow("VOID", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (!window) {
-        std::cout << "Create window error: " << SDL_GetError() << '\n';
+        std::cerr << "[ERROR] Create window error: " << SDL_GetError() << '\n';
         SDL_Quit();
         return 1;
     }
@@ -30,7 +44,7 @@ int main(int argc, char* argv[]) {
     // OpenGL Context
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
     if (!gl_context) {
-        std::cout << "Create gl_context error: " << SDL_GetError() << '\n';
+        std::cerr << "[ERROR] Create gl_context error: " << SDL_GetError() << '\n';
         SDL_DestroyWindow(window);
         SDL_Quit();
         return 1;
@@ -43,36 +57,107 @@ int main(int argc, char* argv[]) {
 
     // Glad2 Init
     if (!gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress)) {
-        std::cout << "could not initialize! Glad error: " << SDL_GetError() << '\n';
+        std::cerr << "[ERROR] Failed to initialize GLAD.\n";
         SDL_GL_DestroyContext(gl_context);
         SDL_DestroyWindow(window);
         SDL_Quit();
         return 1;
     }
 
+    glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+
     // GPU info for test
     std::cout << "Vendor:   " << glGetString(GL_VENDOR) << '\n';
     std::cout << "Renderer: " << glGetString(GL_RENDERER) << '\n';
     std::cout << "Version:  " << glGetString(GL_VERSION) << '\n';
 
+    // Import files
+    std::string vertexSource = ReadFile("../assets/shaders/triangle.vert");
+    std::string fragmentSource = ReadFile("../assets/shaders/triangle.frag");
+
+    if (vertexSource.empty() || fragmentSource.empty()) {
+        std::cerr << "[ERROR] Failed to load shader files.\n";
+        SDL_GL_DestroyContext(gl_context);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+
+    const char* vertexCode = vertexSource.c_str();
+    const char* fragmentCode = fragmentSource.c_str();
+
+    // Vert AND Frag
+
+    GLint success;
+    char infoLog[1024];
+
+    // Compilation Vertex Shader
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertexShader, 1, &vertexCode, nullptr);
+    glCompileShader(vertexShader);
+
+    // Check Vertex Shader
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(vertexShader, 1024, nullptr, infoLog);
+        std::cerr << "[ERROR] Vertex shader compilation failed:\n" << infoLog << '\n';
+        return 1;
+    }
+
+    // Compilation Fragment Shader
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentCode, nullptr);
+    glCompileShader(fragmentShader);
+
+    // Check Fragment Shader
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(fragmentShader, 1024, nullptr, infoLog);
+        std::cerr << "[ERROR] Fragment shader compilation failed:\n" << infoLog << '\n';
+        return 1;
+    }
+
+    // Create Program
+    GLuint shaderProgram = glCreateProgram();
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+
+    // Check Link
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(shaderProgram, 1024, nullptr, infoLog);
+        std::cerr << "[ERROR] Shader program linking failed:\n" << infoLog << '\n';
+        return 1;
+    }
+
+    // Delete Shaders
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
+
+    // Main
     bool running = true;
     SDL_Event event;
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
     while (running) {
         while (SDL_PollEvent(&event)) {
             // Exit
-            if (event.type == SDL_EVENT_QUIT) {
+            if (event.type == SDL_EVENT_QUIT)
                 running = false;
-            }
         }
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
-        // Update Window
+        glUseProgram(shaderProgram);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
         SDL_GL_SwapWindow(window);
     }
 
     // Clear
+    glDeleteVertexArrays(1, &vao);
+    glDeleteProgram(shaderProgram);
     SDL_GL_DestroyContext(gl_context);
     SDL_DestroyWindow(window);
     SDL_Quit();
