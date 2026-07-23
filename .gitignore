@@ -11,6 +11,7 @@ calculator
 bin/
 build/
 dist/
+extern/
 
 # Cmake
 cmake-build-debug/
@@ -18,6 +19,7 @@ cmake-build-debug/
 # IDE
 .vscode/
 .idea/
+.cache/
 
 # Vim
 *.swp

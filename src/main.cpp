@@ -1,24 +1,26 @@
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_opengl.h>
+#include <glad/gl.h>
 #include <iostream>
 
+#define WINDOW_WIDTH 1280
+#define WINDOW_HEIGHT 720
+
 int main(int argc, char* argv[]) {
-    // SDL3 init
+    // SDL3 Init
     if (!SDL_Init(SDL_INIT_VIDEO)) {
-
         std::cout << "SDL could not initialize! SDL_Error: " << SDL_GetError() << '\n';
-
         return 1;
-
     }
 
     // OpenGL Attribute
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 
     // Create Window with OpenGL
-    SDL_Window* window = SDL_CreateWindow("VOID", 1280, 720, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    SDL_Window* window = SDL_CreateWindow("VOID", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (!window) {
         std::cout << "Create window error: " << SDL_GetError() << '\n';
         SDL_Quit();
@@ -35,6 +37,23 @@ int main(int argc, char* argv[]) {
     }
 
     SDL_GL_MakeCurrent(window, gl_context);
+
+    // Vsync
+    SDL_GL_SetSwapInterval(1);
+
+    // Glad2 Init
+    if (!gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress)) {
+        std::cout << "could not initialize! Glad error: " << SDL_GetError() << '\n';
+        SDL_GL_DestroyContext(gl_context);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 1;
+    }
+
+    // GPU info for test
+    std::cout << "Vendor:   " << glGetString(GL_VENDOR) << '\n';
+    std::cout << "Renderer: " << glGetString(GL_RENDERER) << '\n';
+    std::cout << "Version:  " << glGetString(GL_VERSION) << '\n';
 
     bool running = true;
     SDL_Event event;
