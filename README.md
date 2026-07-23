@@ -93,8 +93,8 @@ Shaders are loaded from external GLSL files, compiled, linked into a shader prog
 - [x] GLAD 2 integration
 - [x] Shader loading
 - [x] First rendered triangle
-- [ ] Vertex Buffer Objects (VBO)
-- [ ] Vertex Array Objects (VAO)
+- [x] Vertex Buffer Objects (VBO)
+- [x] Vertex Array Objects (VAO)
 - [ ] Element Buffer Objects (EBO)
 - [ ] Texture loading
 - [ ] Camera

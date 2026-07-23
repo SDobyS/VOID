@@ -90,7 +90,6 @@ int main(int argc, char* argv[]) {
     const char* fragmentCode = fragmentSource.c_str();
 
     // Vert AND Frag
-
     GLint success;
     char infoLog[1024];
 
