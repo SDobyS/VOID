@@ -20,6 +20,9 @@ std::string ReadFile(const std::string& path) {
 }
 
 int main(int argc, char* argv[]) {
+    std::cout << "=== VOID ===\n\n";
+    std::cout << "[INFO] Starting...\n";
+
     // SDL3 Init
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         std::cerr << "[ERROR] SDL could not initialize! SDL_Error: " << SDL_GetError() << '\n';
@@ -135,12 +138,57 @@ int main(int argc, char* argv[]) {
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
 
+    float vertices[] = {
+        // Position     // Color
+        0.0f,  0.5f,    1.0f, 0.0f, 0.0f,
+       -0.5f, -0.5f,    0.0f, 1.0f, 0.0f,
+        0.5f, -0.5f,    0.0f, 0.0f, 1.0f
+   };
+
     // Main
     bool running = true;
     SDL_Event event;
+
+    // VAO VBO
     GLuint vao;
+    GLuint vbo;
+
     glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
+
     glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        sizeof(vertices),
+        vertices,
+        GL_STATIC_DRAW
+    );
+
+    glVertexAttribPointer(
+        0,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        5 * sizeof(float),
+        nullptr
+    );
+    glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(
+        1,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        5 * sizeof(float),
+        reinterpret_cast<void*>(2 * sizeof(float))
+    );
+    glEnableVertexAttribArray(1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
     while (running) {
         while (SDL_PollEvent(&event)) {
             // Exit
@@ -151,12 +199,14 @@ int main(int argc, char* argv[]) {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(shaderProgram);
+        glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         SDL_GL_SwapWindow(window);
     }
 
     // Clear
     glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo);
     glDeleteProgram(shaderProgram);
     SDL_GL_DestroyContext(gl_context);
     SDL_DestroyWindow(window);
