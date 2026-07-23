@@ -138,30 +138,45 @@ int main(int argc, char* argv[]) {
     glDeleteShader(fragmentShader);
 
     float vertices[] = {
-        // Position     // Color
-        0.0f,  0.5f,    1.0f, 0.0f, 0.0f,
-       -0.5f, -0.5f,    0.0f, 1.0f, 0.0f,
-        0.5f, -0.5f,    0.0f, 0.0f, 1.0f
-   };
+        // pos          // color
+        -0.5f,  0.5f,   1,0,0,
+        -0.5f, -0.5f,   0,1,0,
+         0.5f, -0.5f,   0,0,1,
+         0.5f,  0.5f,   1,1,0
+    };
 
-    // Main
-    bool running = true;
-    SDL_Event event;
+    unsigned int indices[] = {
+        0, 1, 2,
+        2, 3, 0
+    };
 
-    // VAO VBO
+    // VAO VBO EBO
     GLuint vao;
     GLuint vbo;
+    GLuint ebo;
 
     glGenVertexArrays(1, &vao);
     glGenBuffers(1, &vbo);
+    glGenBuffers(1, &ebo);
 
+    // VAO
     glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
+    // VBO
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(
         GL_ARRAY_BUFFER,
         sizeof(vertices),
         vertices,
+        GL_STATIC_DRAW
+    );
+
+    // EBO
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER,
+        sizeof(indices),
+        indices,
         GL_STATIC_DRAW
     );
 
@@ -188,6 +203,9 @@ int main(int argc, char* argv[]) {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
+    // Main
+    bool running = true;
+    SDL_Event event;
     while (running) {
         while (SDL_PollEvent(&event)) {
             // Exit
@@ -199,14 +217,27 @@ int main(int argc, char* argv[]) {
         glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(shaderProgram);
         glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        glDrawElements(
+            GL_TRIANGLES,
+            6,
+            GL_UNSIGNED_INT,
+            nullptr
+        );
+
         SDL_GL_SwapWindow(window);
     }
 
     // Clear
+    // VAO VBO EBO
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &ebo);
+
+    // ShaderProgram
     glDeleteProgram(shaderProgram);
+
+    // SDL3
     SDL_GL_DestroyContext(gl_context);
     SDL_DestroyWindow(window);
     SDL_Quit();

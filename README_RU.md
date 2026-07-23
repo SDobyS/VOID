@@ -97,7 +97,7 @@ GLAD загружает функции OpenGL во время выполнени
 - [x] Первый отрисованный треугольник
 - [x] Vertex Buffer Objects (VBO)
 - [x] Vertex Array Objects (VAO)
-- [ ] Element Buffer Objects (EBO)
+- [x] Element Buffer Objects (EBO)
 - [ ] Загрузка текстур
 - [ ] Камера
 - [ ] Загрузка моделей

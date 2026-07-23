@@ -95,7 +95,7 @@ Shaders are loaded from external GLSL files, compiled, linked into a shader prog
 - [x] First rendered triangle
 - [x] Vertex Buffer Objects (VBO)
 - [x] Vertex Array Objects (VAO)
-- [ ] Element Buffer Objects (EBO)
+- [x] Element Buffer Objects (EBO)
 - [ ] Texture loading
 - [ ] Camera
 - [ ] Model loading
