@@ -71,13 +71,16 @@ Shaders are loaded from external GLSL files, compiled, linked into a shader prog
 ```text
 .
 ├── assets/
-│   └── shaders/
-│       ├── triangle.vert
-│       └── triangle.frag
+│   ├── shaders/
+│   │   ├── triangle.vert
+│   │   └── triangle.frag
+│   └── textures/
+│       └── test.png
 ├── docs/
 │   ├── cat.gif
 │   └── example.png
 ├── src/
+│   ├── stb.cpp
 │   └── main.cpp
 ├── CMakeLists.txt
 ├── CMakePresets.json
@@ -96,7 +99,7 @@ Shaders are loaded from external GLSL files, compiled, linked into a shader prog
 - [x] Vertex Buffer Objects (VBO)
 - [x] Vertex Array Objects (VAO)
 - [x] Element Buffer Objects (EBO)
-- [ ] Texture loading
+- [x] Texture loading
 - [ ] Camera
 - [ ] Model loading
 - [ ] Renderer abstraction

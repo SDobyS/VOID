@@ -71,15 +71,16 @@ GLAD загружает функции OpenGL во время выполнени
 ```text
 .
 ├── assets/
-│   └── shaders/
-│       ├── triangle.vert
-│       └── triangle.frag
+│   ├── shaders/
+│   │   ├── triangle.vert
+│   │   └── triangle.frag
+│   └── textures/
+│       └── test.png
 ├── docs/
+│   ├── cat.gif
 │   └── example.png
-├── extern/
-│   ├── include/
-│   └── src/
 ├── src/
+│   ├── stb.cpp
 │   └── main.cpp
 ├── CMakeLists.txt
 ├── CMakePresets.json
@@ -98,7 +99,7 @@ GLAD загружает функции OpenGL во время выполнени
 - [x] Vertex Buffer Objects (VBO)
 - [x] Vertex Array Objects (VAO)
 - [x] Element Buffer Objects (EBO)
-- [ ] Загрузка текстур
+- [x] Загрузка текстур
 - [ ] Камера
 - [ ] Загрузка моделей
 - [ ] Абстракция рендерера
