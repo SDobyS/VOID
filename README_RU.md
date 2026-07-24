@@ -30,6 +30,9 @@
 - Интеграция Dear ImGui через FetchContent для отладочного интерфейса
 - Динамическая коррекция соотношения сторон (aspect ratio)
 - Автоматическое управление зависимостями через CMake FetchContent
+- Ортографическая камера на базе GLM
+- Модульная архитектура движка (Core / Graphics / Utils)
+- Цветная система логирования
 
 ## Требования
 
@@ -55,7 +58,11 @@ cmake --build build
 ## Пример
 
 <p align="center">
-  <img src="docs/example.png" width="900">
+  <img src="docs/example_1.png" width="900">
+</p>
+
+<p align="center">
+  <img src="docs/example_2.png" width="900">
 </p>
 
 _В данный момент движок отображает первый треугольник через современный OpenGL-пайплайн._
@@ -76,14 +83,41 @@ GLAD загружает функции OpenGL во время выполнени
 │   ├── shaders/
 │   │   ├── triangle.vert
 │   │   └── triangle.frag
+│   │
 │   └── textures/
 │       └── test.png
+│ 
 ├── docs/
 │   ├── cat.gif
 │   └── example.png
+│ 
 ├── src/
-│   ├── stb.cpp
-│   └── main.cpp
+│   ├── main.cpp                 
+│   ├── stb.cpp              
+│   │
+│   ├── core/                   
+│   │   ├── Application.cpp
+│   │   ├── Application.h
+│   │   └── Config.h
+│   │
+│   ├── graphics/                
+│   │   ├── Camera/
+│   │   │   ├── OrthographicCamera.cpp
+│   │   │   └── Camera.h         
+│   │   │  
+│   │   ├── Shader.cpp
+│   │   ├── Shader.h
+│   │   ├── Texture.cpp
+│   │   └── Texture.h
+│   │
+│   └── utils/                   
+│       ├── ConsoleColors.h
+│       ├── Log.cpp
+│       ├── Log.h
+│       ├── SystemInfo.h
+│       ├── Time.cpp
+│       └── Time.h
+│
 ├── CMakeLists.txt
 ├── CMakePresets.json
 ├── LICENSE
@@ -107,7 +141,11 @@ GLAD загружает функции OpenGL во время выполнени
 - [ ] Класс Sprite
 - [ ] Класс Texture
 - [ ] Класс Shader
-- [ ] Ортографическая камера
+- [x] Ортографическая камера
+- [x] Модульная архитектура движка
+- [x] Класс Shader
+- [x] Класс Texture
+- [x] Централизованная система конфигурации
 - [ ] Batch Renderer
 - [ ] Sprite Renderer
 - [ ] Рендеринг текста (шрифты)

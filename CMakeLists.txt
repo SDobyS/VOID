@@ -46,6 +46,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(stb)
 
+# GLM
+FetchContent_Declare(
+        glm
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG        1.0.1
+)
+FetchContent_MakeAvailable(glm)
+
 
 # Dear ImGui
 FetchContent_Declare(
@@ -73,8 +81,22 @@ target_include_directories(imgui PUBLIC
 target_link_libraries(imgui PUBLIC SDL3::SDL3 OpenGL::GL)
 
 add_executable(VOID
+        # Entry point
         src/main.cpp
         src/stb.cpp
+
+        # Core
+        src/core/Application.cpp
+
+        # Graphics
+        src/graphics/Shader.cpp
+        src/graphics/Texture.cpp
+        src/graphics/Camera/OrthographicCamera.cpp
+
+        # Utils
+        src/utils/Log.cpp
+        src/utils/Time.cpp
+        src/utils/SystemInfo.cpp
 )
 
 target_link_libraries(VOID PRIVATE
@@ -82,6 +104,7 @@ target_link_libraries(VOID PRIVATE
         OpenGL::GL
         glad
         imgui
+        glm
 )
 
 target_include_directories(VOID PRIVATE

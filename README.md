@@ -30,6 +30,9 @@ The project is built from scratch to explore graphics programming, rendering tec
 - Dear ImGui integration via FetchContent for debug UI
 - Dynamic aspect ratio correction
 - Automated dependency management through CMake FetchContent
+- Orthographic camera powered by GLM
+- Modular engine architecture (Core / Graphics / Utils)
+- Colored logging system
 
 ## Requirements
 
@@ -55,7 +58,11 @@ cmake --build build
 ## Example
 
 <p align="center">
-  <img src="docs/example.png" width="900">
+  <img src="docs/example_1.png" width="900">
+</p>
+
+<p align="center">
+  <img src="docs/example_2.png" width="900">
 </p>
 
 _Currently renders the first triangle using the modern OpenGL pipeline._
@@ -76,14 +83,41 @@ Shaders are loaded from external GLSL files, compiled, linked into a shader prog
 │   ├── shaders/
 │   │   ├── triangle.vert
 │   │   └── triangle.frag
+│   │
 │   └── textures/
 │       └── test.png
+│ 
 ├── docs/
 │   ├── cat.gif
 │   └── example.png
+│ 
 ├── src/
-│   ├── stb.cpp
-│   └── main.cpp
+│   ├── main.cpp                 
+│   ├── stb.cpp              
+│   │
+│   ├── core/                   
+│   │   ├── Application.cpp
+│   │   ├── Application.h
+│   │   └── Config.h
+│   │
+│   ├── graphics/                
+│   │   ├── Camera/
+│   │   │   ├── OrthographicCamera.cpp
+│   │   │   └── Camera.h         
+│   │   │  
+│   │   ├── Shader.cpp
+│   │   ├── Shader.h
+│   │   ├── Texture.cpp
+│   │   └── Texture.h
+│   │
+│   └── utils/                   
+│       ├── ConsoleColors.h
+│       ├── Log.cpp
+│       ├── Log.h
+│       ├── SystemInfo.h
+│       ├── Time.cpp
+│       └── Time.h
+│
 ├── CMakeLists.txt
 ├── CMakePresets.json
 ├── LICENSE
@@ -107,7 +141,11 @@ Shaders are loaded from external GLSL files, compiled, linked into a shader prog
 - [ ] Sprite class
 - [ ] Texture class
 - [ ] Shader class
-- [ ] Orthographic camera
+- [x] Orthographic camera
+- [x] Modular engine architecture
+- [x] Shader abstraction
+- [x] Texture abstraction
+- [x] Centralized configuration system
 - [ ] Batch renderer
 - [ ] Sprite renderer
 - [ ] Font rendering
