@@ -7,7 +7,6 @@
 <img src="https://img.shields.io/badge/SDL-3-orange">
 <img src="https://img.shields.io/badge/GLAD-2-red">
 <img src="https://img.shields.io/badge/CMake-3.25+-blueviolet">
-<img src="https://img.shields.io/badge/vcpkg-supported-green">
 <img src="https://img.shields.io/badge/License-MIT-yellow">
 
 </p>
@@ -20,28 +19,31 @@ The project is built from scratch to explore graphics programming, rendering tec
 
 ## Features
 
-- SDL3 window management
+- SDL3 window management & event handling
 - OpenGL 4.6 Core Profile
-- GLAD 2 loader
-- Modern shader pipeline
-- External GLSL shader loading
-- CMake build system
-- vcpkg integration
-- Cross-platform friendly architecture
+- GLAD 2 loader generated automatically by CMake
+- Modern shader pipeline (external GLSL files)
+- Vertex/Element Buffer Objects (VBO/VAO/EBO)
+- Texture loading via stb_image
+- Automatic fallback texture (purple/black checkerboard) for missing assets
+- Pixel-art friendly texture filtering (GL_NEAREST)
+- Dear ImGui integration via FetchContent for debug UI
+- Dynamic aspect ratio correction
+- Automated dependency management through CMake FetchContent
 
 ## Requirements
 
 - Visual Studio 2022+
 - CMake 3.25+
-- Ninja
-- vcpkg
+- Git
+- Python 3+
 
 ## Build
 
 Configure:
 
 ```bash
-cmake --preset windows-msvc-vcpkg
+cmake --preset windows-msvc-debug
 ```
 
 Build:
@@ -99,10 +101,24 @@ Shaders are loaded from external GLSL files, compiled, linked into a shader prog
 - [x] Vertex Buffer Objects (VBO)
 - [x] Vertex Array Objects (VAO)
 - [x] Element Buffer Objects (EBO)
-- [x] Texture loading
-- [ ] Camera
-- [ ] Model loading
-- [ ] Renderer abstraction
+- [x] Texture loading & Fallback system
+- [x] ImGUI initialization
+- [x] Dynamic aspect ratio handling
+- [ ] Sprite class
+- [ ] Texture class
+- [ ] Shader class
+- [ ] Orthographic camera
+- [ ] Batch renderer
+- [ ] Sprite renderer
+- [ ] Font rendering
+- [ ] Input manager
+- [ ] Asset manager
+- [ ] Scene system
+- [ ] ECS
+- [ ] Tilemap
+- [ ] Animation system
+- [ ] Particle system
+- [ ] Post-processing
 - [ ] And much more...
 
 ## About

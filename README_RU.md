@@ -7,7 +7,6 @@
 <img src="https://img.shields.io/badge/SDL-3-orange">
 <img src="https://img.shields.io/badge/GLAD-2-red">
 <img src="https://img.shields.io/badge/CMake-3.25+-blueviolet">
-<img src="https://img.shields.io/badge/vcpkg-supported-green">
 <img src="https://img.shields.io/badge/License-MIT-yellow">
 
 </p>
@@ -20,28 +19,31 @@
 
 ## Возможности
 
-- Управление окнами через SDL3
+- Управление окнами и событиями через SDL3
 - OpenGL 4.6 Core Profile
-- Загрузчик GLAD 2
-- Современный шейдерный пайплайн
-- Загрузка внешних GLSL-шейдеров
-- Система сборки CMake
-- Интеграция с vcpkg
-- Кроссплатформенная архитектура
+- GLAD 2 загрузчик генерируется автоматически через CMake
+- Современный шейдерный пайплайн с загрузкой внешних GLSL-файлов
+- Vertex Buffer Objects (VBO), Vertex Array Objects (VAO) и Element Buffer Objects (EBO)
+- Загрузка текстур через stb_image 
+- Автоматическая запасная текстура (фиолетово-чёрный checkerboard) при отсутствии файла
+- Фильтрация текстур, оптимизированная под пиксель-арт (GL_NEAREST)
+- Интеграция Dear ImGui через FetchContent для отладочного интерфейса
+- Динамическая коррекция соотношения сторон (aspect ratio)
+- Автоматическое управление зависимостями через CMake FetchContent
 
 ## Требования
 
 - Visual Studio 2022+
 - CMake 3.25+
-- Ninja
-- vcpkg
+- Git
+- Python 3+
 
 ## Сборка
 
 Настройка:
 
 ```bash
-cmake --preset windows-msvc-vcpkg
+cmake --preset windows-msvc-debug
 ```
 
 Сборка:
@@ -92,18 +94,32 @@ GLAD загружает функции OpenGL во время выполнени
 ## Дорожная карта
 
 - [x] Инициализация SDL3
-- [x] Создание OpenGL-контекста
+- [x] Создание OpenGL контекста
 - [x] Интеграция GLAD 2
-- [x] Загрузка шейдеров
-- [x] Первый отрисованный треугольник
+- [x] Загрузка и компиляция шейдеров
+- [x] Отрисовка первого треугольника
 - [x] Vertex Buffer Objects (VBO)
 - [x] Vertex Array Objects (VAO)
 - [x] Element Buffer Objects (EBO)
-- [x] Загрузка текстур
-- [ ] Камера
-- [ ] Загрузка моделей
-- [ ] Абстракция рендерера
-- [ ] И много нового...
+- [x] Загрузка текстур + система fallback
+- [x] Инициализация Dear ImGui
+- [x] Динамическая обработка соотношения сторон
+- [ ] Класс Sprite
+- [ ] Класс Texture
+- [ ] Класс Shader
+- [ ] Ортографическая камера
+- [ ] Batch Renderer
+- [ ] Sprite Renderer
+- [ ] Рендеринг текста (шрифты)
+- [ ] Менеджер ввода
+- [ ] Менеджер ассетов
+- [ ] Система сцен
+- [ ] Entity Component System (ECS)
+- [ ] Tilemap
+- [ ] Система анимаций
+- [ ] Система частиц
+- [ ] Пост-обработка
+- [ ] И многое другое...
 
 ## О проекте
 

@@ -11,7 +11,10 @@ calculator
 bin/
 build/
 dist/
+
+# External dependencies
 extern/
+_deps/
 
 # Cmake
 cmake-build-debug/

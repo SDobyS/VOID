@@ -2,6 +2,10 @@
 #include <glad/gl.h>
 #include <stb_image.h>
 
+#include "imgui.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_opengl3.h"
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -21,6 +25,12 @@ std::string ReadFile(const std::string& path) {
     std::stringstream ss;
     ss << file.rdbuf();
     return ss.str();
+}
+
+void Shutdown(SDL_Window* window, SDL_GLContext context) {
+    if (context) SDL_GL_DestroyContext(context);
+    if (window) SDL_DestroyWindow(window);
+    SDL_Quit();
 }
 
 int main(int argc, char* argv[]) {
@@ -52,8 +62,7 @@ int main(int argc, char* argv[]) {
     SDL_GLContext gl_context = SDL_GL_CreateContext(window);
     if (!gl_context) {
         std::cerr << "[ERROR] Create gl_context error: " << SDL_GetError() << '\n';
-        SDL_DestroyWindow(window);
-        SDL_Quit();
+        Shutdown(window, gl_context);
         return 1;
     }
 
@@ -65,9 +74,7 @@ int main(int argc, char* argv[]) {
     // Glad2 Init
     if (!gladLoadGL((GLADloadfunc)SDL_GL_GetProcAddress)) {
         std::cerr << "[ERROR] Failed to initialize GLAD.\n";
-        SDL_GL_DestroyContext(gl_context);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
+        Shutdown(window, gl_context);
         return 1;
     }
 
@@ -83,14 +90,13 @@ int main(int argc, char* argv[]) {
     std::cout << "Version:  " << glGetString(GL_VERSION) << '\n';
 
     // Import files
-    std::string vertexSource = ReadFile("../assets/shaders/triangle.vert");
-    std::string fragmentSource = ReadFile("../assets/shaders/triangle.frag");
+    const std::string ASSET_PATH = "../assets/";
+    std::string vertexSource = ReadFile(ASSET_PATH + "shaders/triangle.vert");
+    std::string fragmentSource = ReadFile(ASSET_PATH + "shaders/triangle.frag");
 
     if (vertexSource.empty() || fragmentSource.empty()) {
         std::cerr << "[ERROR] Failed to load shader files.\n";
-        SDL_GL_DestroyContext(gl_context);
-        SDL_DestroyWindow(window);
-        SDL_Quit();
+        Shutdown(window, gl_context);
         return 1;
     }
 
@@ -111,6 +117,7 @@ int main(int argc, char* argv[]) {
     if (!success) {
         glGetShaderInfoLog(vertexShader, 1024, nullptr, infoLog);
         std::cerr << "[ERROR] Vertex shader compilation failed:\n" << infoLog << '\n';
+        Shutdown(window, gl_context);
         return 1;
     }
 
@@ -124,6 +131,7 @@ int main(int argc, char* argv[]) {
     if (!success) {
         glGetShaderInfoLog(fragmentShader, 1024, nullptr, infoLog);
         std::cerr << "[ERROR] Fragment shader compilation failed:\n" << infoLog << '\n';
+        Shutdown(window, gl_context);
         return 1;
     }
 
@@ -138,12 +146,23 @@ int main(int argc, char* argv[]) {
     if (!success) {
         glGetProgramInfoLog(shaderProgram, 1024, nullptr, infoLog);
         std::cerr << "[ERROR] Shader program linking failed:\n" << infoLog << '\n';
+        Shutdown(window, gl_context);
         return 1;
     }
 
     // Delete Shaders
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+
+    // ImGui Init
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    if (!ImGui_ImplSDL3_InitForOpenGL(window, gl_context)) {
+        std::cerr << "[ERROR] Failed to initialize ImGui SDL3 backend\n";
+        Shutdown(window, gl_context);
+        return 1;
+    }
+    ImGui_ImplOpenGL3_Init("#version 460");
 
     float vertices[] = {
         // pos           // color               // texture coord
@@ -251,7 +270,14 @@ int main(int argc, char* argv[]) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     int texture_width, texture_height, nrChannels;
-    unsigned char* data = stbi_load("../assets/textures/test.png", &texture_width, &texture_height, &nrChannels, 0);
+    unsigned char* data = stbi_load(
+        (ASSET_PATH + "textures/test.png").c_str(),
+        &texture_width,
+        &texture_height,
+        &nrChannels,
+        0
+    );
+
     if (data) {
         std::cout << "[OK] Texture: \"../assets/textures/test.png\" loaded successfully.\n";
 
@@ -271,7 +297,17 @@ int main(int argc, char* argv[]) {
             255, 0, 255, 255   // 1 1 purple
         };
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, fallbackPixels);
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_RGBA,
+            2,
+            2,
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            fallbackPixels
+        );
         glGenerateMipmap(GL_TEXTURE_2D);
     }
 
@@ -280,16 +316,23 @@ int main(int argc, char* argv[]) {
     SDL_Event event;
     while (running) {
         while (SDL_PollEvent(&event)) {
+            ImGui_ImplSDL3_ProcessEvent(&event);
             if (event.type == SDL_EVENT_QUIT) // exit
                 running = false;
         }
-
         int w, h;
         SDL_GetWindowSize(window, &w, &h);
         glViewport(0, 0, w, h);
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        // ImGui
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
+        ImGui::ShowDemoWindow();
+        ImGui::Render();
 
         // Shader
         glUseProgram(shaderProgram);
@@ -309,6 +352,7 @@ int main(int argc, char* argv[]) {
             nullptr
         );
 
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         SDL_GL_SwapWindow(window);
     }
 
@@ -321,6 +365,11 @@ int main(int argc, char* argv[]) {
 
     // ShaderProgram
     glDeleteProgram(shaderProgram);
+
+    // ImGui
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext();
 
     // SDL3
     SDL_GL_DestroyContext(gl_context);
