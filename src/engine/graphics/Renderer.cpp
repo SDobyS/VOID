@@ -43,9 +43,17 @@ void Renderer::BeginScene(const OrthographicCamera& camera) {
     s_DefaultShader->SetUniformMat4f("u_Model", glm::value_ptr(model));
 }
 
-void Renderer::DrawQuad(const Texture& texture, const glm::vec2& position, const glm::vec2& size, const glm::vec4& color) {
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(position, 0.0f))
-                    * glm::scale(glm::mat4(1.0f), glm::vec3(size, 1.0f));
+void Renderer::DrawQuad(const Texture& texture, const glm::vec2& position, const glm::vec2& size, float rotation, const glm::vec4& color) {
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(position, 0.0f));
+
+    if (rotation != 0.0f) {
+        model = glm::translate(model, glm::vec3(0.5f * size.x, 0.5f * size.y, 0.0f));
+        model = glm::rotate(model, glm::radians(rotation), glm::vec3(0.0f, 0.0f, 1.0f));
+        model = glm::translate(model, glm::vec3(-0.5f * size.x, -0.5f * size.y, 0.0f));
+    }
+
+    model = glm::scale(model, glm::vec3(size, 1.0f));
+    s_DefaultShader->Use();
     s_DefaultShader->SetUniformMat4f("u_Model", glm::value_ptr(model));
     s_DefaultShader->SetUniform4f("u_Color", color);
     texture.Bind();

@@ -10,6 +10,8 @@ public:
     static void Init();
     static void BeginScene(const OrthographicCamera& camera);
     static void DrawQuad(const Texture& texture, const glm::vec2& position, const glm::vec2& size, const glm::vec4& color = {1,1,1,1});
+    static void DrawQuad(const Texture& texture, const glm::vec2& position, const glm::vec2& size,
+                     float rotation = 0.0f, const glm::vec4& color = {1,1,1,1});
 
 private:
     static Shader* s_DefaultShader;

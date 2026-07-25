@@ -113,6 +113,7 @@ add_executable(VOID
         src/engine/utils/Log.cpp
         src/engine/utils/SystemInfo.cpp
         src/engine/utils/Time.cpp
+        src/engine/WindowsGPU.cpp
 )
 
 target_link_libraries(VOID PRIVATE
