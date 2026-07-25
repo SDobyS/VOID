@@ -80,23 +80,39 @@ target_include_directories(imgui PUBLIC
 
 target_link_libraries(imgui PUBLIC SDL3::SDL3 OpenGL::GL)
 
-add_executable(VOID
-        # Entry point
-        src/main.cpp
-        src/stb.cpp
+set(ENTRY_FILE "${CMAKE_CURRENT_SOURCE_DIR}/test.txt")
 
-        # Core
-        src/core/Application.cpp
+if(EXISTS "${ENTRY_FILE}")
+    file(READ "${ENTRY_FILE}" CUSTOM_PATH)
+    string(STRIP "${CUSTOM_PATH}" MAIN_SOURCE_FILE)
+    message(STATUS "==> Building from specified path: ${MAIN_SOURCE_FILE}")
+else()
+    message(FATAL_ERROR "==> File 'test.txt' not found! Create it and specify the path to your main.cpp.")
+endif()
+
+add_executable(VOID
+        # Your Project
+        ${MAIN_SOURCE_FILE}
+
+        # Libs
+        src/engine/Window.cpp
+        src/engine/ImGuiLayer.cpp
+        src/engine/stb.cpp
+        src/engine/Input.cpp
 
         # Graphics
-        src/graphics/Shader.cpp
-        src/graphics/Texture.cpp
-        src/graphics/Camera/OrthographicCamera.cpp
+        src/engine/graphics/Mesh.cpp
+        src/engine/graphics/Shader.cpp
+        src/engine/graphics/Texture.cpp
+        src/engine/graphics/VertexArray.cpp
+        src/engine/graphics/Camera/OrthographicCamera.cpp
+        src/engine/graphics/Renderer.cpp
+        src/engine/graphics/Sprite.cpp
 
         # Utils
-        src/utils/Log.cpp
-        src/utils/Time.cpp
-        src/utils/SystemInfo.cpp
+        src/engine/utils/Log.cpp
+        src/engine/utils/SystemInfo.cpp
+        src/engine/utils/Time.cpp
 )
 
 target_link_libraries(VOID PRIVATE
@@ -109,6 +125,8 @@ target_link_libraries(VOID PRIVATE
 
 target_include_directories(VOID PRIVATE
         ${stb_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/engine
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 set_target_properties(VOID PROPERTIES

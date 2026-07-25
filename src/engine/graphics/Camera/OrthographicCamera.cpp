@@ -2,18 +2,18 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 
-OrthographicCamera::OrthographicCamera(
-    float left,
-    float right,
-    float bottom,
-    float top) :
-    m_Left(left),
-    m_Right(right),
-    m_Bottom(bottom),
-    m_Top(top) {
-
+OrthographicCamera::OrthographicCamera(float left, float right, float bottom, float top)
+    : m_Left(left), m_Right(right), m_Bottom(bottom), m_Top(top) {
     RecalculateProjectionMatrix();
     RecalculateViewMatrix();
+}
+
+void OrthographicCamera::SetProjection(float left, float right, float bottom, float top) {
+    m_Left = left;
+    m_Right = right;
+    m_Bottom = bottom;
+    m_Top = top;
+    RecalculateProjectionMatrix();
 }
 
 void OrthographicCamera::SetPosition(const glm::vec3& position) {
