@@ -3,27 +3,26 @@
 #include "Time.h"
 #include <iostream>
 
-namespace Log {
-    static void PrintLog(const std::string& color, const std::string& tag, const std::string& message, const std::string& details) {
-        if (details.empty()) {
-            std::cout
-            << "[" << GetCurrentTime() << "] "
-            << color << "[" << tag << "] "
-            << Colors::Reset << message
-            << std::endl;
-        } else {
-            std::cout
-            << "[" << GetCurrentTime() << "] "
-            << color << "[" << tag << "] "
-            << Colors::Reset
-            << message << ": " << details
-            << std::endl;
-        }
-    }
+namespace voidx {
+    namespace Log {
+        static LogLevel s_CurrentLevel = LogLevel::Debug;
 
-    void Info(const    std::string& message, const std::string& details)  { PrintLog(Colors::Cyan,    "INFO", message, details); }
-    void Success(const std::string& message, const std::string& details)  { PrintLog(Colors::Green,   " OK ", message, details); }
-    void Warning(const std::string& message, const std::string& details)  { PrintLog(Colors::Yellow,  "WARN", message, details); }
-    void Error(const   std::string& message, const std::string& details)  { PrintLog(Colors::Red,     "ERRO", message, details); }
-    void Debug(const   std::string& message, const std::string& details)  { PrintLog(Colors::Magenta, "DEBG", message, details); }
+        void SetLevel(LogLevel level) { s_CurrentLevel = level; }
+
+        static void PrintLog(LogLevel level, const std::string& color, const std::string& tag, const std::string& message, const std::string& details) {
+            if (level < s_CurrentLevel) return;
+
+            if (details.empty()) {
+                std::cout << "[" << GetCurrentTime() << "] " << color << "[" << tag << "] " << Colors::Reset << message << std::endl;
+            } else {
+                std::cout << "[" << GetCurrentTime() << "] " << color << "[" << tag << "] " << Colors::Reset << message << ": " << details << std::endl;
+            }
+        }
+
+        void Info(const std::string& message, const std::string& details)  { PrintLog(LogLevel::Info, Colors::Cyan, "INFO", message, details); }
+        void Success(const std::string& message, const std::string& details) { PrintLog(LogLevel::Info, Colors::Green, " OK ", message, details); }
+        void Warning(const std::string& message, const std::string& details) { PrintLog(LogLevel::Warning, Colors::Yellow, "WARN", message, details); }
+        void Error(const std::string& message, const std::string& details)   { PrintLog(LogLevel::Error, Colors::Red, "ERRO", message, details); }
+        void Debug(const std::string& message, const std::string& details)   { PrintLog(LogLevel::Debug, Colors::Magenta, "DEBG", message, details); }
+    }
 }

@@ -1,15 +1,22 @@
 #pragma once
-
 #include <glad/gl.h>
 
-class VertexArray {
-public:
-    VertexArray();
-    ~VertexArray();
-    void Bind() const;
-    void Unbind() const;
-    GLuint GetID() const;
+namespace voidx {
+    class VertexArray {
+    public:
+        VertexArray();
+        ~VertexArray();
 
-private:
-    GLuint m_ID = 0;
-};
+        VertexArray(const VertexArray&) = delete;
+        VertexArray& operator=(const VertexArray&) = delete;
+        VertexArray(VertexArray&&) = default;
+        VertexArray& operator=(VertexArray&&) = default;
+
+        void Bind() const;
+        void Unbind() const;
+        GLuint GetID() const { return m_ID; }
+
+    private:
+        GLuint m_ID = 0;
+    };
+}

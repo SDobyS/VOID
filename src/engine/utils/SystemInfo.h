@@ -1,6 +1,8 @@
 #pragma once
 
-namespace SystemInfo {
-    void PrintHardwareInfo();
-    void PrintGPUInfo();
+namespace voidx {
+    namespace SystemInfo {
+        void PrintHardwareInfo();
+        void PrintGPUInfo();
+    }
 }

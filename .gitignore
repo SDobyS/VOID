@@ -16,6 +16,7 @@ dist/
 extern/
 assets/game/
 src/game/
+assets/engine/fonts/arial.ttf
 _deps/
 
 # Cmake

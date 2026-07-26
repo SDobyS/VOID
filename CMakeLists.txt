@@ -46,6 +46,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(stb)
 
+# nlohmann/json
+FetchContent_Declare(
+        nlohmann_json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG        v3.11.3
+)
+FetchContent_MakeAvailable(nlohmann_json)
+
 # GLM
 FetchContent_Declare(
         glm
@@ -80,25 +88,17 @@ target_include_directories(imgui PUBLIC
 
 target_link_libraries(imgui PUBLIC SDL3::SDL3 OpenGL::GL)
 
-set(ENTRY_FILE "${CMAKE_CURRENT_SOURCE_DIR}/test.txt")
-
-if(EXISTS "${ENTRY_FILE}")
-    file(READ "${ENTRY_FILE}" CUSTOM_PATH)
-    string(STRIP "${CUSTOM_PATH}" MAIN_SOURCE_FILE)
-    message(STATUS "==> Building from specified path: ${MAIN_SOURCE_FILE}")
-else()
-    message(FATAL_ERROR "==> File 'test.txt' not found! Create it and specify the path to your main.cpp.")
-endif()
-
 add_executable(VOID
         # Your Project
-        ${MAIN_SOURCE_FILE}
+
 
         # Libs
         src/engine/Window.cpp
         src/engine/ImGuiLayer.cpp
         src/engine/stb.cpp
         src/engine/Input.cpp
+        src/engine/WindowsGPU.cpp
+        src/engine/AssetManager.cpp
 
         # Graphics
         src/engine/graphics/Mesh.cpp
@@ -108,12 +108,17 @@ add_executable(VOID
         src/engine/graphics/Camera/OrthographicCamera.cpp
         src/engine/graphics/Renderer.cpp
         src/engine/graphics/Sprite.cpp
+        src/engine/graphics/Font.cpp
+        src/engine/graphics/Animation.cpp
+        src/engine/graphics/Framebuffer.cpp
+        src/engine/graphics/ParticleSystem.cpp
+        src/engine/graphics/Tilemap.cpp
+        src/engine/graphics/AnimatedSprite.cpp
 
         # Utils
         src/engine/utils/Log.cpp
         src/engine/utils/SystemInfo.cpp
         src/engine/utils/Time.cpp
-        src/engine/WindowsGPU.cpp
 )
 
 target_link_libraries(VOID PRIVATE
@@ -122,6 +127,7 @@ target_link_libraries(VOID PRIVATE
         glad
         imgui
         glm
+        nlohmann_json::nlohmann_json
 )
 
 target_include_directories(VOID PRIVATE
