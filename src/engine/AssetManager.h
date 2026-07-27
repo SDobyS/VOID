@@ -13,6 +13,8 @@ namespace voidx {
         static void Shutdown();
 
         static bool Exists(const std::string& name);
+        [[nodiscard]] static std::string GetBasePath() { return m_BasePath; }
+
         static std::shared_ptr<Texture> LoadTexture(const std::string& name, const std::string& path, TextureFilter filter = TextureFilter::Nearest);
         static std::shared_ptr<Texture> GetTexture(const std::string& name);
         static void UnloadTexture(const std::string& name);
@@ -26,8 +28,11 @@ namespace voidx {
         static void UnloadShader(const std::string& name);
 
     private:
+        static std::string ResolvePath(const std::string& path);
+
         static std::string m_BasePath;
         static std::unordered_map<std::string, std::shared_ptr<Texture>> m_Textures;
+        static std::unordered_map<std::string, std::weak_ptr<Texture>> m_TexturePaths;
         static std::unordered_map<std::string, std::shared_ptr<Font>> m_Fonts;
         static std::unordered_map<std::string, std::shared_ptr<Shader>> m_Shaders;
     };

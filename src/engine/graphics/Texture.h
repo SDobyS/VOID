@@ -4,8 +4,8 @@
 
 namespace voidx {
     enum class TextureFilter {
-        Linear,
-        Nearest
+        Nearest,
+        Linear
     };
 
     class Texture {
@@ -19,14 +19,15 @@ namespace voidx {
         Texture(Texture&& other) noexcept;
         Texture& operator=(Texture&& other) noexcept;
 
-        bool Load(const std::string& path, TextureFilter filter = TextureFilter::Nearest);
-        void LoadFromMemory(unsigned char* data, int width, int height, int channels, TextureFilter filter = TextureFilter::Linear);
+        bool Load(const std::string& path, TextureFilter filter = TextureFilter::Nearest, bool genMipmaps = false);
+        void LoadFromMemory(unsigned char* data, int width, int height, int channels, TextureFilter filter = TextureFilter::Linear, bool genMipmaps = false);
+
         void Bind(uint32_t slot = 0) const;
         void Unbind() const;
 
-        GLuint GetID() const { return m_ID; }
-        int GetWidth() const { return m_Width; }
-        int GetHeight() const { return m_Height; }
+        [[nodiscard]] int GetWidth() const { return m_Width; }
+        [[nodiscard]] int GetHeight() const { return m_Height; }
+        [[nodiscard]] GLuint GetID() const { return m_ID; }
 
     private:
         GLuint m_ID = 0;

@@ -1,10 +1,14 @@
 #include "AssetManager.h"
 #include "utils/Log.h"
 #include <SDL3/SDL.h>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 namespace voidx {
     std::string AssetManager::m_BasePath;
     std::unordered_map<std::string, std::shared_ptr<Texture>> AssetManager::m_Textures;
+    std::unordered_map<std::string, std::weak_ptr<Texture>> AssetManager::m_TexturePaths;
     std::unordered_map<std::string, std::shared_ptr<Font>> AssetManager::m_Fonts;
     std::unordered_map<std::string, std::shared_ptr<Shader>> AssetManager::m_Shaders;
 
@@ -14,19 +18,42 @@ namespace voidx {
     }
 
     void AssetManager::Shutdown() {
-        m_Textures.clear(); m_Fonts.clear(); m_Shaders.clear();
+        m_Textures.clear(); m_TexturePaths.clear(); m_Fonts.clear(); m_Shaders.clear();
         Log::Info("AssetManager", "Shut down (all assets released)");
     }
 
+    std::string AssetManager::ResolvePath(const std::string& path) {
+        fs::path p(path);
+        return p.is_absolute() ? path : (m_BasePath + path);
+    }
+
     std::shared_ptr<Texture> AssetManager::LoadTexture(const std::string& name, const std::string& path, TextureFilter filter) {
-        auto it = m_Textures.find(name);
-        if (it != m_Textures.end()) return it->second;
+        std::string fullPath = ResolvePath(path);
+
+        fs::path canonicalPath = fs::weakly_canonical(fullPath);
+        std::string pathKey = canonicalPath.generic_string();
+
+        auto pathIt = m_TexturePaths.find(pathKey);
+        if (pathIt != m_TexturePaths.end()) {
+            if (auto tex = pathIt->second.lock()) {
+                return tex;
+            }
+            m_TexturePaths.erase(pathIt);
+        }
+
+        auto nameIt = m_Textures.find(name);
+        if (nameIt != m_Textures.end()) {
+            Log::Warning("AssetManager", "Texture name '" + name + "' already used by a different file. Overwriting.");
+            m_Textures.erase(nameIt);
+        }
 
         auto texture = std::make_shared<Texture>();
-        if (!texture->Load(m_BasePath + path, filter)) {
+        if (!texture->Load(fullPath, filter)) {
             Log::Error("AssetManager", "Failed to load texture: " + name);
             return nullptr;
         }
+
+        m_TexturePaths[pathKey] = texture;
         m_Textures[name] = texture;
         return texture;
     }
@@ -38,14 +65,18 @@ namespace voidx {
         return nullptr;
     }
 
-    void AssetManager::UnloadTexture(const std::string& name) { m_Textures.erase(name); }
+    void AssetManager::UnloadTexture(const std::string& name) {
+        if (auto it = m_Textures.find(name); it != m_Textures.end()) {
+            m_Textures.erase(it);
+        }
+    }
 
     std::shared_ptr<Font> AssetManager::LoadFont(const std::string& name, const std::string& path, float size) {
         auto it = m_Fonts.find(name);
         if (it != m_Fonts.end()) return it->second;
 
         auto font = std::make_shared<Font>();
-        if (!font->Load(m_BasePath + path, size)) {
+        if (!font->Load(ResolvePath(path), size)) {
             Log::Error("AssetManager", "Failed to load font: " + name);
             return nullptr;
         }
@@ -67,7 +98,7 @@ namespace voidx {
         if (it != m_Shaders.end()) return it->second;
 
         auto shader = std::make_shared<Shader>();
-        if (!shader->Load(m_BasePath + vertPath, m_BasePath + fragPath)) {
+        if (!shader->Load(ResolvePath(vertPath), ResolvePath(fragPath))) {
             Log::Error("AssetManager", "Failed to load shader: " + name);
             return nullptr;
         }

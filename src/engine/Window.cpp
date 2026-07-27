@@ -13,10 +13,13 @@
 
 #include <iostream>
 #include <chrono>
+#include <thread>
 
 #ifdef _WIN32
 #include <windows.h>
+#include <mmsystem.h>
 #include <dwmapi.h>
+#pragma comment(lib, "winmm.lib")
 #pragma comment(lib, "dwmapi.lib")
 #endif
 
@@ -75,12 +78,22 @@ namespace voidx {
             SDL_DestroyWindow(s_Window);
             s_Window = nullptr;
         }
+
+#ifdef _WIN32
+        timeEndPeriod(1);
+#endif
+
         Log::Info("Window", "Quitting SDL...");
         SDL_Quit();
     }
 
     bool InitWindow(const WindowConfig& config) {
         Log::Info("Window", "Starting VOID Engine...");
+
+#ifdef _WIN32
+        timeBeginPeriod(1);
+#endif
+
         if (!SDL_Init(SDL_INIT_VIDEO)) {
             Log::Error("Window", std::string("SDL init failed: ") + SDL_GetError());
             return false;
@@ -153,6 +166,7 @@ namespace voidx {
         }
 
         s_GLContext = SDL_GL_CreateContext(s_Window);
+
         if (!s_GLContext) {
             Log::Error("Window", std::string("GL Context failed: ") + SDL_GetError());
             SDL_DestroyWindow(s_Window);
@@ -166,6 +180,21 @@ namespace voidx {
             CleanupCore();
             return false;
         }
+
+#ifndef NDEBUG
+        glEnable(GL_DEBUG_OUTPUT);
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        glDebugMessageCallback([](GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam) {
+            if (severity == GL_DEBUG_SEVERITY_HIGH || severity == GL_DEBUG_SEVERITY_MEDIUM) {
+                Log::Error("OpenGL", std::string(message));
+            }
+        }, nullptr);
+        glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+#endif
+
+        int samples = 0;
+        glGetIntegerv(GL_SAMPLES, &samples);
+        Log::Info("Window", "Actual MSAA samples: " + std::to_string(samples));
 
         int glMajor, glMinor;
         glGetIntegerv(GL_MAJOR_VERSION, &glMajor);
@@ -270,7 +299,12 @@ namespace voidx {
         if (s_VSyncMode == VSyncMode::Disabled && s_FPSLimit > 0) {
             float targetTime = 1.0f / static_cast<float>(s_FPSLimit);
             while (frameTime < targetTime) {
-                SDL_Delay(1);
+                float remaining = targetTime - frameTime;
+                if (remaining > 0.002f) {
+                    SDL_Delay(1);
+                } else {
+                    std::this_thread::yield();
+                }
                 frameEnd = std::chrono::steady_clock::now();
                 frameTime = std::chrono::duration<float>(frameEnd - s_FrameStart).count();
                 s_FrameTimeMs = frameTime * 1000.0f;

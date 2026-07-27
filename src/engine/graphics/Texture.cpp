@@ -2,6 +2,9 @@
 #include "utils/Log.h"
 #include <stb_image.h>
 #include <utility>
+#include <fstream>
+#include <filesystem>
+#include <vector>
 
 namespace voidx {
     Texture::~Texture() {
@@ -31,7 +34,7 @@ namespace voidx {
         return *this;
     }
 
-    bool Texture::Load(const std::string& path, TextureFilter filter) {
+    bool Texture::Load(const std::string& path, TextureFilter filter, bool genMipmaps) {
         Log::Info("Texture", "Loading texture: " + path);
 
         stbi_set_flip_vertically_on_load(false);
@@ -39,18 +42,35 @@ namespace voidx {
         glBindTexture(GL_TEXTURE_2D, m_ID);
 
         GLenum glFilter = (filter == TextureFilter::Nearest) ? GL_NEAREST : GL_LINEAR;
+        GLenum glMinFilter = genMipmaps ? (filter == TextureFilter::Nearest ? GL_NEAREST_MIPMAP_NEAREST : GL_LINEAR_MIPMAP_LINEAR) : glFilter;
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glMinFilter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glFilter);
 
+        std::ifstream file(std::filesystem::u8path(path), std::ios::binary | std::ios::ate);
+        if (!file.is_open()) {
+            Log::Warning("Texture", "Failed to load. Using fallback texture.");
+            unsigned char fallbackPixels[16] = { 255, 0, 255, 255, 0, 0, 0, 255, 0, 0, 0, 255, 255, 0, 255, 255 };
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0, GL_RGBA, GL_UNSIGNED_BYTE, fallbackPixels);
+            m_Width = 2; m_Height = 2;
+            return true;
+        }
+
+        auto fileSize = file.tellg();
+        file.seekg(0, std::ios::beg);
+        std::vector<unsigned char> fileData(fileSize);
+        file.read(reinterpret_cast<char*>(fileData.data()), fileSize);
+
         int width, height, channels;
-        unsigned char* data = stbi_load(path.c_str(), &width, &height, &channels, 0);
+        unsigned char* data = stbi_load_from_memory(fileData.data(), static_cast<int>(fileData.size()), &width, &height, &channels, 0);
 
         if (data) {
             Log::Success("Texture", "Loaded successfully (" + std::to_string(width) + "x" + std::to_string(height) + ", Channels: " + std::to_string(channels) + ")");
             GLenum format = (channels == 4) ? GL_RGBA : GL_RGB;
             glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+            if (genMipmaps) glGenerateMipmap(GL_TEXTURE_2D);
             stbi_image_free(data);
             m_Width = width;
             m_Height = height;
@@ -64,7 +84,7 @@ namespace voidx {
         return true;
     }
 
-    void Texture::LoadFromMemory(unsigned char* data, int width, int height, int channels, TextureFilter filter) {
+    void Texture::LoadFromMemory(unsigned char* data, int width, int height, int channels, TextureFilter filter, bool genMipmaps) {
         Log::Info("Texture", "Loading texture from memory (" + std::to_string(width) + "x" + std::to_string(height) + ")...");
 
         if (m_ID) glDeleteTextures(1, &m_ID);
@@ -72,14 +92,25 @@ namespace voidx {
         glBindTexture(GL_TEXTURE_2D, m_ID);
 
         GLenum glFilter = (filter == TextureFilter::Nearest) ? GL_NEAREST : GL_LINEAR;
+        GLenum glMinFilter = genMipmaps ? (filter == TextureFilter::Nearest ? GL_NEAREST_MIPMAP_NEAREST : GL_LINEAR_MIPMAP_LINEAR) : glFilter;
+
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glFilter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, glMinFilter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glFilter);
+
+        if (channels == 1) {
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, GL_ONE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_G, GL_ONE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_ONE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_A, GL_RED);
+        }
 
         GLenum format = (channels == 4) ? GL_RGBA : GL_RED;
         GLenum internalFormat = (channels == 4) ? GL_RGBA8 : GL_R8;
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+
+        if (genMipmaps) glGenerateMipmap(GL_TEXTURE_2D);
 
         m_Width = width;
         m_Height = height;

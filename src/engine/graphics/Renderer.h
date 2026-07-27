@@ -41,7 +41,7 @@ namespace voidx {
         static void Flush();
         static glm::vec4 s_CameraBounds;
 
-        static Shader* s_DefaultShader;
+        static std::unique_ptr<Shader> s_DefaultShader;
         static GLuint s_QuadVAO;
         static GLuint s_QuadVBO;
         static GLuint s_QuadEBO;

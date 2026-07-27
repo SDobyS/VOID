@@ -17,6 +17,7 @@ namespace voidx {
         void Unbind() const;
         void Resize(int width, int height);
         GLuint GetTextureID() const { return m_TextureID; }
+        [[nodiscard]] bool IsValid() const { return m_FBO != 0 && m_IsComplete; }
 
     private:
         GLuint m_FBO = 0;
@@ -24,5 +25,6 @@ namespace voidx {
         GLuint m_RBO = 0;
         int m_Width = 0;
         int m_Height = 0;
+        bool m_IsComplete = false;
     };
 }

@@ -48,7 +48,6 @@ namespace voidx {
         const char* fragmentCode = fragmentSource.c_str();
 
         GLint success;
-        char infoLog[1024];
 
         Log::Info("Shader", "Compiling Vertex Shader...");
         GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -56,8 +55,11 @@ namespace voidx {
         glCompileShader(vertexShader);
         glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
         if (!success) {
-            glGetShaderInfoLog(vertexShader, 1024, nullptr, infoLog);
-            Log::Error("Shader", "Vertex shader compilation failed: " + std::string(infoLog));
+            GLint logLength = 0;
+            glGetShaderiv(vertexShader, GL_INFO_LOG_LENGTH, &logLength);
+            std::vector<char> infoLog(logLength > 1 ? logLength : 1);
+            glGetShaderInfoLog(vertexShader, logLength, nullptr, infoLog.data());
+            Log::Error("Shader", "Vertex shader compilation failed: " + std::string(infoLog.data()));
             glDeleteShader(vertexShader);
             return false;
         }
@@ -69,8 +71,11 @@ namespace voidx {
         glCompileShader(fragmentShader);
         glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
         if (!success) {
-            glGetShaderInfoLog(fragmentShader, 1024, nullptr, infoLog);
-            Log::Error("Shader", "Fragment shader compilation failed: " + std::string(infoLog));
+            GLint logLength = 0;
+            glGetShaderiv(fragmentShader, GL_INFO_LOG_LENGTH, &logLength);
+            std::vector<char> infoLog(logLength > 1 ? logLength : 1);
+            glGetShaderInfoLog(fragmentShader, logLength, nullptr, infoLog.data());
+            Log::Error("Shader", "Fragment shader compilation failed: " + std::string(infoLog.data()));
             glDeleteShader(vertexShader);
             glDeleteShader(fragmentShader);
             return false;
@@ -84,8 +89,11 @@ namespace voidx {
         glLinkProgram(m_ID);
         glGetProgramiv(m_ID, GL_LINK_STATUS, &success);
         if (!success) {
-            glGetProgramInfoLog(m_ID, 1024, nullptr, infoLog);
-            Log::Error("Shader", "Shader program linking failed: " + std::string(infoLog));
+            GLint logLength = 0;
+            glGetProgramiv(m_ID, GL_INFO_LOG_LENGTH, &logLength);
+            std::vector<char> infoLog(logLength > 1 ? logLength : 1);
+            glGetProgramInfoLog(m_ID, logLength, nullptr, infoLog.data());
+            Log::Error("Shader", "Shader program linking failed: " + std::string(infoLog.data()));
             glDeleteShader(vertexShader);
             glDeleteShader(fragmentShader);
             glDeleteProgram(m_ID);

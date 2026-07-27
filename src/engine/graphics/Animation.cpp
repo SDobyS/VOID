@@ -1,9 +1,17 @@
 #include "Animation.h"
+#include "utils/Log.h"
 
 namespace voidx {
     Animation::Animation(std::shared_ptr<Texture> texture, int frameWidth, int frameHeight, int frameCount, float frameTime, int framesPerRow)
         : m_Texture(texture), m_FrameWidth(frameWidth), m_FrameHeight(frameHeight),
-          m_FrameCount(frameCount), m_FrameTime(frameTime), m_FramesPerRow(framesPerRow > 0 ? framesPerRow : 1) {}
+          m_FrameCount(frameCount > 0 ? frameCount : 1), m_FrameTime(frameTime), m_FramesPerRow(framesPerRow > 0 ? framesPerRow : 1) {
+        if (frameCount <= 0) {
+            Log::Warning("Animation", "Invalid frameCount provided, defaulting to 1.");
+        }
+        if (framesPerRow <= 0) {
+            Log::Warning("Animation", "Invalid framesPerRow provided, defaulting to 1.");
+        }
+    }
 
     void Animation::Update(float dt) {
         m_CurrentTime += dt;

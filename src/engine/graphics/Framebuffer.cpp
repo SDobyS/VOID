@@ -21,8 +21,15 @@ namespace voidx {
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_RBO);
 
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            Log::Error("Framebuffer", "Framebuffer is not complete! ID: " + std::to_string(m_FBO));
+            m_IsComplete = false;
+        } else {
+            Log::Success("Framebuffer", "Created successfully (FBO ID: " + std::to_string(m_FBO) + ")");
+            m_IsComplete = true;
+        }
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        Log::Success("Framebuffer", "Created successfully (FBO ID: " + std::to_string(m_FBO) + ")");
     }
 
     Framebuffer::~Framebuffer() {
@@ -49,7 +56,8 @@ namespace voidx {
       m_TextureID(std::exchange(other.m_TextureID, 0)),
       m_RBO(std::exchange(other.m_RBO, 0)),
       m_Width(other.m_Width),
-      m_Height(other.m_Height) {
+      m_Height(other.m_Height),
+      m_IsComplete(other.m_IsComplete) {
         Log::Debug("Framebuffer", "Move constructor called");
     }
 
@@ -66,6 +74,7 @@ namespace voidx {
             m_RBO = std::exchange(other.m_RBO, 0);
             m_Width = other.m_Width;
             m_Height = other.m_Height;
+            m_IsComplete = other.m_IsComplete;
         }
         return *this;
     }

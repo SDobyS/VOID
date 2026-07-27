@@ -1,5 +1,6 @@
 #include "Renderer.h"
 #include "utils/Log.h"
+#include "AssetManager.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <algorithm>
@@ -10,7 +11,7 @@ namespace voidx {
     constexpr uint32_t MAX_VERTICES = MAX_QUADS * 4;
     constexpr uint32_t MAX_INDICES = MAX_QUADS * 6;
 
-    Shader* Renderer::s_DefaultShader = nullptr;
+    std::unique_ptr<Shader> Renderer::s_DefaultShader = nullptr;
     GLuint Renderer::s_QuadVAO = 0;
     GLuint Renderer::s_QuadVBO = 0;
     GLuint Renderer::s_QuadEBO = 0;
@@ -27,9 +28,11 @@ namespace voidx {
     GLuint Renderer::s_WhiteTextureID = 0;
 
     bool Renderer::Init() {
-        s_DefaultShader = new Shader();
-        if (!s_DefaultShader->Load("../assets/engine/shaders/default.vert", "../assets/engine/shaders/default.frag")) {
+        s_DefaultShader = std::make_unique<Shader>();
+        std::string basePath = AssetManager::GetBasePath();
+        if (!s_DefaultShader->Load(basePath + "../assets/engine/shaders/default.vert", basePath + "../assets/engine/shaders/default.frag")) {
             Log::Error("Renderer", "Failed to load default shader! Rendering will not work.");
+            s_DefaultShader.reset();
             return false;
         }
 
@@ -41,7 +44,7 @@ namespace voidx {
 
         glBindVertexArray(s_QuadVAO);
         glBindBuffer(GL_ARRAY_BUFFER, s_QuadVBO);
-        glBufferData(GL_ARRAY_BUFFER, MAX_VERTICES * sizeof(BatchVertex), nullptr, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(MAX_VERTICES * sizeof(BatchVertex)), nullptr, GL_DYNAMIC_DRAW);
 
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(BatchVertex), reinterpret_cast<void*>(offsetof(BatchVertex, Position)));
@@ -68,12 +71,12 @@ namespace voidx {
         }
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, s_QuadEBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * indices.size(), indices.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(sizeof(uint32_t) * indices.size()), indices.data(), GL_STATIC_DRAW);
         glBindVertexArray(0);
 
         int maxTexUnits = 32;
         glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTexUnits);
-        s_MaxTextureSlots = std::min(32, maxTexUnits);
+        s_MaxTextureSlots = static_cast<uint32_t>(std::min(32, maxTexUnits));
         Log::Info("Renderer", "Max texture units supported: " + std::to_string(s_MaxTextureSlots));
         s_TextureSlots.resize(s_MaxTextureSlots);
 
@@ -98,9 +101,11 @@ namespace voidx {
         s_DefaultShader->Use();
         s_DefaultShader->SetUniformMat4f("u_ViewProj", glm::value_ptr(camera.GetViewProjectionMatrix()));
 
-        int samplers[32];
-        for (int i = 0; i < 32; i++) samplers[i] = i;
-        s_DefaultShader->SetUniform1iv("u_Textures", 32, samplers);
+        std::vector<int> samplers(s_MaxTextureSlots);
+        for (size_t i = 0; i < s_MaxTextureSlots; i++) {
+            samplers[i] = static_cast<int>(i);
+        }
+        s_DefaultShader->SetUniform1iv("u_Textures", static_cast<int>(s_MaxTextureSlots), samplers.data());
 
         s_CameraBounds = camera.GetVisibleBounds();
         s_IndexCount = 0;
@@ -111,11 +116,11 @@ namespace voidx {
     }
 
     void Renderer::EndScene() {
-        uint32_t dataSize = static_cast<uint32_t>(reinterpret_cast<uint8_t*>(s_VertexBufferPtr) - reinterpret_cast<uint8_t*>(s_VertexBufferBase.data()));
+        auto dataSize = static_cast<uint32_t>(reinterpret_cast<uint8_t*>(s_VertexBufferPtr) - reinterpret_cast<uint8_t*>(s_VertexBufferBase.data()));
 
         glBindBuffer(GL_ARRAY_BUFFER, s_QuadVBO);
         glBufferData(GL_ARRAY_BUFFER, MAX_VERTICES * sizeof(BatchVertex), nullptr, GL_DYNAMIC_DRAW);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, dataSize, s_VertexBufferBase.data());
+        glBufferSubData(GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(dataSize), s_VertexBufferBase.data());
 
         Flush();
         s_Stats.DrawCalls++;
@@ -123,12 +128,12 @@ namespace voidx {
 
     void Renderer::Flush() {
         for (uint32_t i = 0; i < s_TextureSlotIndex; i++) {
-            glActiveTexture(GL_TEXTURE0 + i);
+            glActiveTexture(static_cast<GLenum>(GL_TEXTURE0 + i));
             glBindTexture(GL_TEXTURE_2D, s_TextureSlots[i]);
         }
 
         glBindVertexArray(s_QuadVAO);
-        glDrawElements(GL_TRIANGLES, s_IndexCount, GL_UNSIGNED_INT, nullptr);
+        glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(s_IndexCount), GL_UNSIGNED_INT, nullptr);
     }
 
     void Renderer::DrawQuad(const Texture& texture, const glm::vec2& position, const glm::vec2& size, float rotation, const glm::vec4& color, const glm::vec2& pivot, bool flipX, bool flipY) {
@@ -346,28 +351,68 @@ namespace voidx {
     void Renderer::DrawText(const Font& font, const std::string& text, const glm::vec2& position, float scale, const glm::vec4& color) {
         float x = position.x;
         float y = position.y;
-        const stbtt_bakedchar* glyphs = font.GetGlyphs();
-        const Texture& tex = font.GetTexture();
+        const auto& tex = font.GetTexture();
+        auto texW = static_cast<float>(tex.GetWidth());
+        auto texH = static_cast<float>(tex.GetHeight());
 
-        for (char c : text) {
-            if (c < 32 || c > 126) c = ' ';
-            const stbtt_bakedchar& g = glyphs[c - 32];
+        const auto* spaceGlyph = font.GetCharInfo(' ');
+        auto spaceAdvance = spaceGlyph ? spaceGlyph->xadvance * scale : 0.0f;
 
-            glm::vec2 quadPos = { x + g.xoff * scale, y + g.yoff * scale };
-            glm::vec2 quadSize = { (g.x1 - g.x0) * scale, (g.y1 - g.y0) * scale };
+        uint32_t prevChar = 0;
+        for (size_t i = 0; i < text.size(); ) {
+            uint32_t codepoint = 0;
+            uint8_t c = text[i];
 
-            float texW = tex.GetWidth();
-            float texH = tex.GetHeight();
+            if (c < 0x80) { codepoint = c; i += 1; }
+            else if ((c & 0xE0) == 0xC0) {
+                if (i + 1 >= text.size()) break;
+                codepoint = ((c & 0x1F) << 6) | (text[i+1] & 0x3F);
+                i += 2;
+            }
+            else if ((c & 0xF0) == 0xE0) {
+                if (i + 2 >= text.size()) break;
+                codepoint = ((c & 0x0F) << 12) | ((text[i+1] & 0x3F) << 6) | (text[i+2] & 0x3F);
+                i += 3;
+            }
+            else { codepoint = '?'; i += 1; }
+
+            if (codepoint == '\n') {
+                x = position.x;
+                y += font.GetLineHeight() * scale;
+                prevChar = 0;
+                continue;
+            }
+
+            if (prevChar) x += font.GetKerning(prevChar, codepoint, scale);
+            prevChar = codepoint;
+
+            const auto* g = font.GetCharInfo(codepoint);
+            if (!g) {
+                x += spaceAdvance;
+                continue;
+            }
+
+            auto x0 = static_cast<float>(g->x0);
+            auto y0 = static_cast<float>(g->y0);
+            auto x1 = static_cast<float>(g->x1);
+            auto y1 = static_cast<float>(g->y1);
+            auto xoff = g->xoff * scale;
+            auto yoff = g->yoff * scale;
+            auto quadW = (x1 - x0) * scale;
+            auto quadH = (y1 - y0) * scale;
+
+            glm::vec2 quadPos = { x + xoff, y + yoff };
+            glm::vec2 quadSize = { quadW, quadH };
 
             glm::vec2 uv[4] = {
-                { g.x0 / texW, g.y0 / texH },
-                { g.x1 / texW, g.y0 / texH },
-                { g.x1 / texW, g.y1 / texH },
-                { g.x0 / texW, g.y1 / texH }
+                { x0 / texW, y0 / texH },
+                { x1 / texW, y0 / texH },
+                { x1 / texW, y1 / texH },
+                { x0 / texW, y1 / texH }
             };
 
             DrawQuadUV(tex, quadPos, quadSize, uv, color);
-            x += g.xadvance * scale;
+            x += g->xadvance * scale;
         }
     }
 
@@ -379,8 +424,7 @@ namespace voidx {
 
         if (s_DefaultShader) {
             Log::Debug("Renderer", "Deleting default shader...");
-            delete s_DefaultShader;
-            s_DefaultShader = nullptr;
+            s_DefaultShader.reset();
         }
 
         if (s_WhiteTextureID) {
