@@ -1,5 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
+#include <algorithm>
 
 namespace voidx {
     class OrthographicCamera {
@@ -19,6 +20,14 @@ namespace voidx {
         [[nodiscard]] const glm::mat4& GetProjectionMatrix() const { return m_Projection; }
         [[nodiscard]] const glm::mat4& GetViewMatrix() const { return m_View; }
         [[nodiscard]] const glm::mat4& GetViewProjectionMatrix() const { return m_ViewProjection; }
+
+        [[nodiscard]] glm::vec4 GetVisibleBounds() const {
+            float minX = m_Position.x + std::min(m_Left, m_Right) / m_Zoom;
+            float maxX = m_Position.x + std::max(m_Left, m_Right) / m_Zoom;
+            float minY = m_Position.y + std::min(m_Bottom, m_Top) / m_Zoom;
+            float maxY = m_Position.y + std::max(m_Bottom, m_Top) / m_Zoom;
+            return { minX, minY, maxX, maxY };
+        }
 
     private:
         void RecalculateViewMatrix();
