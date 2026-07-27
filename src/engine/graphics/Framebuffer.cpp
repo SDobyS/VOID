@@ -1,7 +1,11 @@
 #include "Framebuffer.h"
+#include "utils/Log.h"
+#include <utility>
 
 namespace voidx {
     Framebuffer::Framebuffer(int width, int height) : m_Width(width), m_Height(height) {
+        Log::Info("Framebuffer", "Creating FBO (" + std::to_string(width) + "x" + std::to_string(height) + ")...");
+
         glGenFramebuffers(1, &m_FBO);
         glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
 
@@ -18,19 +22,59 @@ namespace voidx {
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_RBO);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        Log::Success("Framebuffer", "Created successfully (FBO ID: " + std::to_string(m_FBO) + ")");
     }
 
     Framebuffer::~Framebuffer() {
-        glDeleteFramebuffers(1, &m_FBO);
-        glDeleteTextures(1, &m_TextureID);
-        glDeleteRenderbuffers(1, &m_RBO);
+        if (m_FBO) {
+            Log::Debug("Framebuffer", "Destroyed (FBO ID: " + std::to_string(m_FBO) + ")");
+            glDeleteFramebuffers(1, &m_FBO);
+            glDeleteTextures(1, &m_TextureID);
+            glDeleteRenderbuffers(1, &m_RBO);
+        }
     }
 
-    void Framebuffer::Bind() const { glBindFramebuffer(GL_FRAMEBUFFER, m_FBO); }
-    void Framebuffer::Unbind() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
+    void Framebuffer::Bind() const {
+        Log::Debug("Framebuffer", "Binding FBO ID: " + std::to_string(m_FBO));
+        glBindFramebuffer(GL_FRAMEBUFFER, m_FBO);
+    }
+
+    void Framebuffer::Unbind() const {
+        Log::Debug("Framebuffer", "Unbinding FBO (binding default framebuffer)");
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+
+    Framebuffer::Framebuffer(Framebuffer&& other) noexcept
+    : m_FBO(std::exchange(other.m_FBO, 0)),
+      m_TextureID(std::exchange(other.m_TextureID, 0)),
+      m_RBO(std::exchange(other.m_RBO, 0)),
+      m_Width(other.m_Width),
+      m_Height(other.m_Height) {
+        Log::Debug("Framebuffer", "Move constructor called");
+    }
+
+    Framebuffer& Framebuffer::operator=(Framebuffer&& other) noexcept {
+        if (this != &other) {
+            Log::Debug("Framebuffer", "Move assignment called. Deleting old FBO ID: " + std::to_string(m_FBO));
+
+            if (m_FBO) glDeleteFramebuffers(1, &m_FBO);
+            if (m_TextureID) glDeleteTextures(1, &m_TextureID);
+            if (m_RBO) glDeleteRenderbuffers(1, &m_RBO);
+
+            m_FBO = std::exchange(other.m_FBO, 0);
+            m_TextureID = std::exchange(other.m_TextureID, 0);
+            m_RBO = std::exchange(other.m_RBO, 0);
+            m_Width = other.m_Width;
+            m_Height = other.m_Height;
+        }
+        return *this;
+    }
 
     void Framebuffer::Resize(int width, int height) {
         if (m_Width == width && m_Height == height) return;
+
+        Log::Info("Framebuffer", "Resizing FBO ID: " + std::to_string(m_FBO) + " to " + std::to_string(width) + "x" + std::to_string(height));
+
         m_Width = width;
         m_Height = height;
 

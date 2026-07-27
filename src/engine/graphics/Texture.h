@@ -15,8 +15,9 @@ namespace voidx {
 
         Texture(const Texture&) = delete;
         Texture& operator=(const Texture&) = delete;
-        Texture(Texture&&) = default;
-        Texture& operator=(Texture&&) = default;
+
+        Texture(Texture&& other) noexcept;
+        Texture& operator=(Texture&& other) noexcept;
 
         bool Load(const std::string& path, TextureFilter filter = TextureFilter::Nearest);
         void LoadFromMemory(unsigned char* data, int width, int height, int channels, TextureFilter filter = TextureFilter::Linear);

@@ -9,8 +9,9 @@ namespace voidx {
 
         VertexArray(const VertexArray&) = delete;
         VertexArray& operator=(const VertexArray&) = delete;
-        VertexArray(VertexArray&&) = default;
-        VertexArray& operator=(VertexArray&&) = default;
+
+        VertexArray(VertexArray&& other) noexcept;
+        VertexArray& operator=(VertexArray&& other) noexcept;
 
         void Bind() const;
         void Unbind() const;

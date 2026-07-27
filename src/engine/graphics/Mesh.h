@@ -10,8 +10,9 @@ namespace voidx {
 
         Mesh(const Mesh&) = delete;
         Mesh& operator=(const Mesh&) = delete;
-        Mesh(Mesh&&) = default;
-        Mesh& operator=(Mesh&&) = default;
+
+        Mesh(Mesh&& other) noexcept;
+        Mesh& operator=(Mesh&& other) noexcept;
 
         bool Create(const float* vertices, unsigned int verticesSize, const unsigned int* indices, unsigned int indicesSize);
         void Bind() const;

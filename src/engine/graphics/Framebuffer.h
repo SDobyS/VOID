@@ -9,8 +9,9 @@ namespace voidx {
 
         Framebuffer(const Framebuffer&) = delete;
         Framebuffer& operator=(const Framebuffer&) = delete;
-        Framebuffer(Framebuffer&&) = default;
-        Framebuffer& operator=(Framebuffer&&) = default;
+
+        Framebuffer(Framebuffer&& other) noexcept;
+        Framebuffer& operator=(Framebuffer&& other) noexcept;
 
         void Bind() const;
         void Unbind() const;

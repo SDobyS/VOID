@@ -1,11 +1,31 @@
 #include "Shader.h"
+#include <utility>
 #include "../utils/Log.h"
 
 namespace voidx {
+    Shader::Shader(Shader&& other) noexcept
+    : m_ID(std::exchange(other.m_ID, 0)),
+      m_UniformLocationCache(std::move(other.m_UniformLocationCache)) {
+        Log::Debug("Shader", "Move constructor called");
+    }
+
+    Shader& Shader::operator=(Shader&& other) noexcept {
+        if (this != &other) {
+            Log::Debug("Shader", "Move assignment called. Deleting old program ID: " + std::to_string(m_ID));
+
+            if (m_ID) glDeleteProgram(m_ID);
+
+            m_ID = std::exchange(other.m_ID, 0);
+            m_UniformLocationCache = std::move(other.m_UniformLocationCache);
+        }
+        return *this;
+    }
+
     std::string Shader::ReadFile(const std::string& path) {
+        Log::Info("Shader", "Reading file: " + path);
         std::ifstream file(path);
         if (!file.is_open()) {
-            Log::Error("Failed to open shader file", path);
+            Log::Error("Shader", "Failed to open shader file: " + path);
             return {};
         }
         std::stringstream ss;
@@ -14,11 +34,13 @@ namespace voidx {
     }
 
     bool Shader::Load(const std::string& vertexPath, const std::string& fragmentPath) {
+        Log::Info("Shader", "Loading shader program...");
+
         std::string vertexSource = ReadFile(vertexPath);
         std::string fragmentSource = ReadFile(fragmentPath);
 
         if (vertexSource.empty() || fragmentSource.empty()) {
-            Log::Error("Failed to load shader files", "Vertex or fragment source is empty");
+            Log::Error("Shader", "Vertex or fragment source is empty.");
             return false;
         }
 
@@ -28,29 +50,34 @@ namespace voidx {
         GLint success;
         char infoLog[1024];
 
+        Log::Info("Shader", "Compiling Vertex Shader...");
         GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
         glShaderSource(vertexShader, 1, &vertexCode, nullptr);
         glCompileShader(vertexShader);
         glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
         if (!success) {
             glGetShaderInfoLog(vertexShader, 1024, nullptr, infoLog);
-            Log::Error("Vertex shader compilation failed", std::string(infoLog));
+            Log::Error("Shader", "Vertex shader compilation failed: " + std::string(infoLog));
             glDeleteShader(vertexShader);
             return false;
         }
+        Log::Success("Shader", "Vertex shader compiled.");
 
+        Log::Info("Shader", "Compiling Fragment Shader...");
         GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
         glShaderSource(fragmentShader, 1, &fragmentCode, nullptr);
         glCompileShader(fragmentShader);
         glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
         if (!success) {
             glGetShaderInfoLog(fragmentShader, 1024, nullptr, infoLog);
-            Log::Error("Fragment shader compilation failed", std::string(infoLog));
+            Log::Error("Shader", "Fragment shader compilation failed: " + std::string(infoLog));
             glDeleteShader(vertexShader);
             glDeleteShader(fragmentShader);
             return false;
         }
+        Log::Success("Shader", "Fragment shader compiled.");
 
+        Log::Info("Shader", "Linking Shader Program...");
         m_ID = glCreateProgram();
         glAttachShader(m_ID, vertexShader);
         glAttachShader(m_ID, fragmentShader);
@@ -58,7 +85,7 @@ namespace voidx {
         glGetProgramiv(m_ID, GL_LINK_STATUS, &success);
         if (!success) {
             glGetProgramInfoLog(m_ID, 1024, nullptr, infoLog);
-            Log::Error("Shader program linking failed", std::string(infoLog));
+            Log::Error("Shader", "Shader program linking failed: " + std::string(infoLog));
             glDeleteShader(vertexShader);
             glDeleteShader(fragmentShader);
             glDeleteProgram(m_ID);
@@ -66,6 +93,7 @@ namespace voidx {
             return false;
         }
 
+        Log::Success("Shader", "Shader program linked successfully (ID: " + std::to_string(m_ID) + ")");
         glDeleteShader(vertexShader);
         glDeleteShader(fragmentShader);
         return true;
@@ -73,9 +101,15 @@ namespace voidx {
 
     GLint Shader::GetUniformLocation(const std::string& name) {
         auto it = m_UniformLocationCache.find(name);
-        if (it != m_UniformLocationCache.end()) return it->second;
+        if (it != m_UniformLocationCache.end()) {
+            return it->second;
+        }
 
+        Log::Debug("Shader", "Uniform cache miss. Querying GL: " + name);
         GLint loc = glGetUniformLocation(m_ID, name.c_str());
+        if (loc == -1) {
+            Log::Warning("Shader", "Uniform '" + name + "' not found or optimized out.");
+        }
         m_UniformLocationCache[name] = loc;
         return loc;
     }
@@ -96,6 +130,14 @@ namespace voidx {
         glUniform1iv(GetUniformLocation(name), count, data);
     }
 
-    void Shader::Use() const { glUseProgram(m_ID); }
-    Shader::~Shader() { if (m_ID) glDeleteProgram(m_ID); }
+    void Shader::Use() const {
+        glUseProgram(m_ID);
+    }
+
+    Shader::~Shader() {
+        if (m_ID) {
+            Log::Debug("Shader", "Destroyed program ID: " + std::to_string(m_ID));
+            glDeleteProgram(m_ID);
+        }
+    }
 }

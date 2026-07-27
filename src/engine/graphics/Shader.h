@@ -15,8 +15,9 @@ namespace voidx {
 
         Shader(const Shader&) = delete;
         Shader& operator=(const Shader&) = delete;
-        Shader(Shader&&) = default;
-        Shader& operator=(Shader&&) = default;
+
+        Shader(Shader&& other) noexcept;
+        Shader& operator=(Shader&& other) noexcept;
 
         void SetUniformMat4f(const std::string& name, const float* data);
         void SetUniform4f(const std::string& name, const glm::vec4& value);

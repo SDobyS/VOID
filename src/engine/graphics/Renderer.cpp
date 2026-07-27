@@ -316,11 +316,45 @@ namespace voidx {
     }
 
     void Renderer::Shutdown() {
+        Log::Info("Renderer", "Shutting down and cleaning resources...");
+
+        Log::Debug("Renderer", "Clearing vertex buffer base...");
         s_VertexBufferBase.clear();
-        delete s_DefaultShader;
-        glDeleteTextures(1, &s_WhiteTextureID);
-        glDeleteVertexArrays(1, &s_QuadVAO);
-        glDeleteBuffers(1, &s_QuadVBO);
-        glDeleteBuffers(1, &s_QuadEBO);
+
+        if (s_DefaultShader) {
+            Log::Debug("Renderer", "Deleting default shader...");
+            delete s_DefaultShader;
+            s_DefaultShader = nullptr;
+        }
+
+        if (s_WhiteTextureID) {
+            Log::Debug("Renderer", "Deleting white fallback texture (ID: " + std::to_string(s_WhiteTextureID) + ")...");
+            glDeleteTextures(1, &s_WhiteTextureID);
+            s_WhiteTextureID = 0;
+        }
+        if (s_QuadVAO) {
+            Log::Debug("Renderer", "Deleting Quad VAO (ID: " + std::to_string(s_QuadVAO) + ")...");
+            glDeleteVertexArrays(1, &s_QuadVAO);
+            s_QuadVAO = 0;
+        }
+        if (s_QuadVBO) {
+            Log::Debug("Renderer", "Deleting Quad VBO (ID: " + std::to_string(s_QuadVBO) + ")...");
+            glDeleteBuffers(1, &s_QuadVBO);
+            s_QuadVBO = 0;
+        }
+        if (s_QuadEBO) {
+            Log::Debug("Renderer", "Deleting Quad EBO (ID: " + std::to_string(s_QuadEBO) + ")...");
+            glDeleteBuffers(1, &s_QuadEBO);
+            s_QuadEBO = 0;
+        }
+
+        Log::Debug("Renderer", "Clearing texture slots and batch state...");
+        s_TextureSlots.clear();
+        s_TextureSlotIndex = 1;
+        s_IndexCount = 0;
+        s_VertexBufferPtr = nullptr;
+        s_Stats = RendererStats();
+
+        Log::Success("Renderer", "Shutdown complete.");
     }
 }

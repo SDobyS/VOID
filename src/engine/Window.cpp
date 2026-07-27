@@ -42,17 +42,45 @@ namespace voidx {
     static int s_FrameCounter = 0;
     static int s_CurrentFPS = 0;
 
+    static bool s_ImGuiInitialized = false;
+    static bool s_RendererInitialized = false;
+    static bool s_AssetManagerInitialized = false;
+
     static void CleanupCore() {
-        ShutdownImGui();
-        Renderer::Shutdown();
-        AssetManager::Shutdown();
-        if (s_GLContext) { SDL_GL_DestroyContext(s_GLContext); s_GLContext = nullptr; }
-        if (s_Window) { SDL_DestroyWindow(s_Window); s_Window = nullptr; }
+        Log::Info("Window", "Running core cleanup sequence...");
+
+        if (s_ImGuiInitialized) {
+            Log::Info("Window", "Shutting down ImGui...");
+            ShutdownImGui();
+            s_ImGuiInitialized = false;
+        }
+        if (s_RendererInitialized) {
+            Log::Info("Window", "Shutting down Renderer...");
+            Renderer::Shutdown();
+            s_RendererInitialized = false;
+        }
+        if (s_AssetManagerInitialized) {
+            Log::Info("Window", "Shutting down AssetManager...");
+            AssetManager::Shutdown();
+            s_AssetManagerInitialized = false;
+        }
+
+        if (s_GLContext) {
+            Log::Info("Window", "Destroying GL Context...");
+            SDL_GL_DestroyContext(s_GLContext);
+            s_GLContext = nullptr;
+        }
+        if (s_Window) {
+            Log::Info("Window", "Destroying SDL Window...");
+            SDL_DestroyWindow(s_Window);
+            s_Window = nullptr;
+        }
+        Log::Info("Window", "Quitting SDL...");
         SDL_Quit();
     }
 
     bool InitWindow(const WindowConfig& config) {
-        Log::Info("Starting VOID Engine...");
+        Log::Info("Window", "Starting VOID Engine...");
         if (!SDL_Init(SDL_INIT_VIDEO)) {
             Log::Error("Window", std::string("SDL init failed: ") + SDL_GetError());
             return false;
@@ -172,18 +200,25 @@ namespace voidx {
         SystemInfo::PrintHardwareInfo();
         SystemInfo::PrintGPUInfo();
 
+        Log::Info("AssetManager", "Initializing...");
         AssetManager::Init();
+        s_AssetManagerInitialized = true;
+
+        Log::Info("Renderer", "Initializing...");
         if (!Renderer::Init()) {
             Log::Error("Window", "Renderer initialization failed!");
             CleanupCore();
             return false;
         }
+        s_RendererInitialized = true;
 
+        Log::Info("ImGuiLayer", "Initializing...");
         if (!InitImGui(s_Window, s_GLContext)) {
             Log::Error("Window", "ImGui initialization failed!");
             CleanupCore();
             return false;
         }
+        s_ImGuiInitialized = true;
 
         Log::Success("Window", "VOID Engine started successfully");
         s_LastFrameTime = std::chrono::steady_clock::now();
