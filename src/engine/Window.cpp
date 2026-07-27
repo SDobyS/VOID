@@ -243,6 +243,7 @@ namespace voidx {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             ImGui_ImplSDL3_ProcessEvent(&event);
+            Input::ProcessEvent(event);
             if (event.type == SDL_EVENT_QUIT) s_Running = false;
             if (event.type == SDL_EVENT_KEY_DOWN) {
                 if (event.key.scancode == SDL_SCANCODE_F11) ToggleFullscreen();

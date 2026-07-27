@@ -1,5 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
+#include <SDL3/SDL.h>
 
 namespace voidx {
     enum KeyCode {
@@ -112,18 +113,65 @@ namespace voidx {
     enum MouseButton {
         MOUSE_BUTTON_LEFT = 1,
         MOUSE_BUTTON_MIDDLE = 2,
-        MOUSE_BUTTON_RIGHT = 3
+        MOUSE_BUTTON_RIGHT = 3,
+        MOUSE_BUTTON_SIDE = 4,
+        MOUSE_BUTTON_EXTRA = 5,
+        MOUSE_BUTTON_FORWARD = 6,
+        MOUSE_BUTTON_BACK = 7
+    };
+
+    enum GamepadButton {
+        GAMEPAD_BUTTON_INVALID = 0,
+        GAMEPAD_BUTTON_A,
+        GAMEPAD_BUTTON_B,
+        GAMEPAD_BUTTON_X,
+        GAMEPAD_BUTTON_Y,
+        GAMEPAD_BUTTON_BACK,
+        GAMEPAD_BUTTON_GUIDE,
+        GAMEPAD_BUTTON_START,
+        GAMEPAD_BUTTON_LEFT_STICK,
+        GAMEPAD_BUTTON_RIGHT_STICK,
+        GAMEPAD_BUTTON_LEFT_SHOULDER,
+        GAMEPAD_BUTTON_RIGHT_SHOULDER,
+        GAMEPAD_BUTTON_DPAD_UP,
+        GAMEPAD_BUTTON_DPAD_DOWN,
+        GAMEPAD_BUTTON_DPAD_LEFT,
+        GAMEPAD_BUTTON_DPAD_RIGHT
+    };
+
+    enum GamepadAxis {
+        GAMEPAD_AXIS_INVALID = 0,
+        GAMEPAD_AXIS_LEFT_X,
+        GAMEPAD_AXIS_LEFT_Y,
+        GAMEPAD_AXIS_RIGHT_X,
+        GAMEPAD_AXIS_RIGHT_Y,
+        GAMEPAD_AXIS_LEFT_TRIGGER,
+        GAMEPAD_AXIS_RIGHT_TRIGGER
     };
 
     namespace Input {
+        void ProcessEvent(const SDL_Event& event);
         void Update();
+
         bool IsKeyDown(KeyCode key);
         bool IsKeyPressed(KeyCode key);
         bool IsKeyReleased(KeyCode key);
 
         bool IsMouseButtonDown(MouseButton button);
+        bool IsMouseButtonPressed(MouseButton button);
+        bool IsMouseButtonReleased(MouseButton button);
         glm::vec2 GetMousePosition();
         float GetMouseX();
         float GetMouseY();
+        float GetMouseWheelMove();
+
+        bool IsGamepadAvailable(int index);
+        float GetGamepadAxisMovement(int index, GamepadAxis axis);
+        bool IsGamepadButtonDown(int index, GamepadButton button);
+        bool IsGamepadButtonPressed(int index, GamepadButton button);
+        bool IsGamepadButtonReleased(int index, GamepadButton button);
+
+        int GetTouchPointCount();
+        glm::vec2 GetTouchPosition(int index);
     }
 }
