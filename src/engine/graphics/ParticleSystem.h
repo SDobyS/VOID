@@ -18,6 +18,7 @@ namespace voidx {
         float RotationSpeed;
         float LifeTime;
         float Life;
+        float ZOrder;
     };
 
     struct ParticleConfig {
@@ -39,6 +40,8 @@ namespace voidx {
 
         float RotationSpeedMin = 0.0f;
         float RotationSpeedMax = 0.0f;
+
+        float ZOrder = 0.0f;
     };
 
     class ParticleSystem {

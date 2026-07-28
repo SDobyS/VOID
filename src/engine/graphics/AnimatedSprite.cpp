@@ -1,8 +1,7 @@
 #include "AnimatedSprite.h"
-#include "Renderer.h"
+#include "SceneRenderer.h"
 
 namespace voidx {
-
     AnimatedSprite::AnimatedSprite(std::shared_ptr<Texture> texture, int frameWidth, int frameHeight, int frameCount, float frameTime, int framesPerRow)
         : m_Animation(texture, frameWidth, frameHeight, frameCount, frameTime, framesPerRow) {
         m_Sprite = Sprite(texture, {0, 0}, {static_cast<float>(frameWidth), static_cast<float>(frameHeight)});
@@ -24,16 +23,17 @@ namespace voidx {
             static_cast<float>(m_Animation.GetFrameHeight())
         );
 
-        Renderer::DrawQuadUV(
-            *tex,
-            m_Sprite.GetPosition(),
-            size,
-            uvs,
-            m_Sprite.GetColor(),
-            m_Sprite.GetPivot(),
-            m_Sprite.GetRotation(),
-            m_Sprite.GetFlipX(),
-            m_Sprite.GetFlipY()
-        );
+        QuadRenderCommand cmd;
+        cmd.TextureID = tex->GetID();
+        cmd.Position = m_Sprite.GetPosition();
+        cmd.Size = size;
+        cmd.UV[0] = uvs[0]; cmd.UV[1] = uvs[1]; cmd.UV[2] = uvs[2]; cmd.UV[3] = uvs[3];
+        cmd.Color = m_Sprite.GetColor();
+        cmd.Pivot = m_Sprite.GetPivot();
+        cmd.Rotation = m_Sprite.GetRotation();
+        cmd.FlipX = m_Sprite.GetFlipX();
+        cmd.FlipY = m_Sprite.GetFlipY();
+        cmd.UseUVs = true;
+        SceneRenderer::Submit(cmd);
     }
 }

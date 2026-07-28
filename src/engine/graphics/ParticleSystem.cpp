@@ -1,4 +1,5 @@
 #include "ParticleSystem.h"
+#include "SceneRenderer.h"
 
 namespace voidx {
     ParticleSystem::ParticleSystem(uint32_t maxParticles) : m_RNG(std::random_device{}()) {
@@ -33,6 +34,7 @@ namespace voidx {
 
             p.LifeTime = config.LifeTime > 0.0f ? config.LifeTime : 0.001f;
             p.Life = p.LifeTime;
+            p.ZOrder = config.ZOrder;
 
             m_PoolIndex = (m_PoolIndex + 1) % m_Particles.size();
         }
@@ -55,7 +57,17 @@ namespace voidx {
                 float t = 1.0f - (p.Life / p.LifeTime);
                 glm::vec4 color = glm::mix(p.ColorStart, p.ColorEnd, t);
                 float size = glm::mix(p.SizeStart, p.SizeEnd, t);
-                Renderer::DrawColorQuad(p.Position, { size, size }, color, p.Rotation);
+
+                QuadRenderCommand cmd;
+                cmd.TextureID = 0;
+                cmd.Position = p.Position;
+                cmd.Size = { size, size };
+                cmd.Color = color;
+                cmd.Rotation = p.Rotation;
+                cmd.IsTransparent = true;
+                cmd.Pivot = {0.5f, 0.5f};
+                cmd.ZOrder = p.ZOrder;
+                SceneRenderer::Submit(cmd);
             }
         }
     }

@@ -1,5 +1,5 @@
 #include "Sprite.h"
-#include "Renderer.h"
+#include "SceneRenderer.h"
 
 namespace voidx {
     Sprite::Sprite(std::shared_ptr<Texture> texture, const glm::vec2& position, const glm::vec2& size, const glm::vec4& color)
@@ -7,6 +7,15 @@ namespace voidx {
 
     void Sprite::Draw() {
         if (!m_Texture) return;
-        Renderer::DrawQuad(*m_Texture, m_Position, m_Size, m_Rotation, m_Color, m_Pivot, m_FlipX, m_FlipY);
+        QuadRenderCommand cmd;
+        cmd.TextureID = m_Texture->GetID();
+        cmd.Position = m_Position;
+        cmd.Size = m_Size;
+        cmd.Rotation = m_Rotation;
+        cmd.Color = m_Color;
+        cmd.Pivot = m_Pivot;
+        cmd.FlipX = m_FlipX;
+        cmd.FlipY = m_FlipY;
+        SceneRenderer::Submit(cmd);
     }
 }

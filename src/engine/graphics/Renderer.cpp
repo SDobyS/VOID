@@ -20,6 +20,7 @@ namespace voidx {
     uint32_t Renderer::s_IndexCount = 0;
     std::vector<BatchVertex> Renderer::s_VertexBufferBase;
     BatchVertex* Renderer::s_VertexBufferPtr = nullptr;
+    std::vector<int> Renderer::s_Samplers;
 
     uint32_t Renderer::s_MaxTextureSlots = 32;
     std::vector<GLuint> Renderer::s_TextureSlots;
@@ -80,6 +81,11 @@ namespace voidx {
         Log::Info("Renderer", "Max texture units supported: " + std::to_string(s_MaxTextureSlots));
         s_TextureSlots.resize(s_MaxTextureSlots);
 
+        s_Samplers.resize(s_MaxTextureSlots);
+        for (size_t i = 0; i < s_MaxTextureSlots; i++) {
+            s_Samplers[i] = static_cast<int>(i);
+        }
+
         glGenTextures(1, &s_WhiteTextureID);
         glBindTexture(GL_TEXTURE_2D, s_WhiteTextureID);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -100,19 +106,12 @@ namespace voidx {
     void Renderer::BeginScene(const OrthographicCamera& camera) {
         s_DefaultShader->Use();
         s_DefaultShader->SetUniformMat4f("u_ViewProj", glm::value_ptr(camera.GetViewProjectionMatrix()));
-
-        std::vector<int> samplers(s_MaxTextureSlots);
-        for (size_t i = 0; i < s_MaxTextureSlots; i++) {
-            samplers[i] = static_cast<int>(i);
-        }
-        s_DefaultShader->SetUniform1iv("u_Textures", static_cast<int>(s_MaxTextureSlots), samplers.data());
+        s_DefaultShader->SetUniform1iv("u_Textures", static_cast<int>(s_MaxTextureSlots), s_Samplers.data());
 
         s_CameraBounds = camera.GetVisibleBounds();
         s_IndexCount = 0;
         s_VertexBufferPtr = s_VertexBufferBase.data();
         s_TextureSlotIndex = 1;
-        s_Stats.DrawCalls = 0;
-        s_Stats.QuadCount = 0;
     }
 
     void Renderer::EndScene() {
@@ -136,9 +135,10 @@ namespace voidx {
         glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(s_IndexCount), GL_UNSIGNED_INT, nullptr);
     }
 
-    void Renderer::DrawQuad(const Texture& texture, const glm::vec2& position, const glm::vec2& size, float rotation, const glm::vec4& color, const glm::vec2& pivot, bool flipX, bool flipY) {
-        if (position.x + size.x < s_CameraBounds.x || position.x > s_CameraBounds.z ||
-        position.y + size.y < s_CameraBounds.y || position.y > s_CameraBounds.w) {
+    void Renderer::DrawQuad(GLuint textureID, const glm::vec2& position, const glm::vec2& size, float rotation, const glm::vec4& color, const glm::vec2& pivot, bool flipX, bool flipY) {
+        float diag = glm::length(size) * 0.5f;
+        if (position.x - diag > s_CameraBounds.z || position.x + diag < s_CameraBounds.x ||
+            position.y - diag > s_CameraBounds.w || position.y + diag < s_CameraBounds.y) {
                 return;
         }
         if (s_IndexCount >= MAX_INDICES) {
@@ -149,22 +149,24 @@ namespace voidx {
         }
 
         float texIndex = 0.0f;
-        for (uint32_t i = 1; i < s_TextureSlotIndex; i++) {
-            if (s_TextureSlots[i] == texture.GetID()) {
-                texIndex = static_cast<float>(i);
-                break;
+        if (textureID != s_WhiteTextureID) {
+            for (uint32_t i = 1; i < s_TextureSlotIndex; i++) {
+                if (s_TextureSlots[i] == textureID) {
+                    texIndex = static_cast<float>(i);
+                    break;
+                }
             }
-        }
-        if (texIndex == 0.0f) {
-            if (s_TextureSlotIndex >= s_MaxTextureSlots) {
-                EndScene();
-                s_IndexCount = 0;
-                s_VertexBufferPtr = s_VertexBufferBase.data();
-                s_TextureSlotIndex = 1;
+            if (texIndex == 0.0f) {
+                if (s_TextureSlotIndex >= s_MaxTextureSlots) {
+                    EndScene();
+                    s_IndexCount = 0;
+                    s_VertexBufferPtr = s_VertexBufferBase.data();
+                    s_TextureSlotIndex = 1;
+                }
+                texIndex = static_cast<float>(s_TextureSlotIndex);
+                s_TextureSlots[s_TextureSlotIndex] = textureID;
+                s_TextureSlotIndex++;
             }
-            texIndex = static_cast<float>(s_TextureSlotIndex);
-            s_TextureSlots[s_TextureSlotIndex] = texture.GetID();
-            s_TextureSlotIndex++;
         }
 
         glm::vec2 offset(size.x * pivot.x, size.y * pivot.y);
@@ -209,9 +211,10 @@ namespace voidx {
         s_Stats.QuadCount++;
     }
 
-    void Renderer::DrawQuadUV(const Texture& texture, const glm::vec2& position, const glm::vec2& size, const glm::vec2 uv[4], const glm::vec4& color, const glm::vec2& pivot, float rotation, bool flipX, bool flipY) {
-        if (position.x + size.x < s_CameraBounds.x || position.x > s_CameraBounds.z ||
-        position.y + size.y < s_CameraBounds.y || position.y > s_CameraBounds.w) {
+    void Renderer::DrawQuadUV(GLuint textureID, const glm::vec2& position, const glm::vec2& size, const glm::vec2 uv[4], const glm::vec4& color, const glm::vec2& pivot, float rotation, bool flipX, bool flipY) {
+        float diag = glm::length(size) * 0.5f;
+        if (position.x - diag > s_CameraBounds.z || position.x + diag < s_CameraBounds.x ||
+            position.y - diag > s_CameraBounds.w || position.y + diag < s_CameraBounds.y) {
                 return;
         }
         if (s_IndexCount >= MAX_INDICES) {
@@ -222,22 +225,24 @@ namespace voidx {
         }
 
         float texIndex = 0.0f;
-        for (uint32_t i = 1; i < s_TextureSlotIndex; i++) {
-            if (s_TextureSlots[i] == texture.GetID()) {
-                texIndex = static_cast<float>(i);
-                break;
+        if (textureID != s_WhiteTextureID) {
+            for (uint32_t i = 1; i < s_TextureSlotIndex; i++) {
+                if (s_TextureSlots[i] == textureID) {
+                    texIndex = static_cast<float>(i);
+                    break;
+                }
             }
-        }
-        if (texIndex == 0.0f) {
-            if (s_TextureSlotIndex >= s_MaxTextureSlots) {
-                EndScene();
-                s_IndexCount = 0;
-                s_VertexBufferPtr = s_VertexBufferBase.data();
-                s_TextureSlotIndex = 1;
+            if (texIndex == 0.0f) {
+                if (s_TextureSlotIndex >= s_MaxTextureSlots) {
+                    EndScene();
+                    s_IndexCount = 0;
+                    s_VertexBufferPtr = s_VertexBufferBase.data();
+                    s_TextureSlotIndex = 1;
+                }
+                texIndex = static_cast<float>(s_TextureSlotIndex);
+                s_TextureSlots[s_TextureSlotIndex] = textureID;
+                s_TextureSlotIndex++;
             }
-            texIndex = static_cast<float>(s_TextureSlotIndex);
-            s_TextureSlots[s_TextureSlotIndex] = texture.GetID();
-            s_TextureSlotIndex++;
         }
 
         glm::vec2 offset(size.x * pivot.x, size.y * pivot.y);
@@ -272,80 +277,22 @@ namespace voidx {
         if (flipX) { std::swap(t0, t1); std::swap(t3, t2); }
         if (flipY) { std::swap(t0, t3); std::swap(t1, t2); }
 
-        s_VertexBufferPtr->Position = v0;
-        s_VertexBufferPtr->Color = color;
-        s_VertexBufferPtr->TexCoords = t0;
-        s_VertexBufferPtr->TexIndex = texIndex;
-        s_VertexBufferPtr++;
-
-        s_VertexBufferPtr->Position = v1;
-        s_VertexBufferPtr->Color = color;
-        s_VertexBufferPtr->TexCoords = t1;
-        s_VertexBufferPtr->TexIndex = texIndex;
-        s_VertexBufferPtr++;
-
-        s_VertexBufferPtr->Position = v2;
-        s_VertexBufferPtr->Color = color;
-        s_VertexBufferPtr->TexCoords = t2;
-        s_VertexBufferPtr->TexIndex = texIndex;
-        s_VertexBufferPtr++;
-
-        s_VertexBufferPtr->Position = v3;
-        s_VertexBufferPtr->Color = color;
-        s_VertexBufferPtr->TexCoords = t3;
-        s_VertexBufferPtr->TexIndex = texIndex;
-        s_VertexBufferPtr++;
+        s_VertexBufferPtr->Position = v0; s_VertexBufferPtr->Color = color; s_VertexBufferPtr->TexCoords = t0; s_VertexBufferPtr->TexIndex = texIndex; s_VertexBufferPtr++;
+        s_VertexBufferPtr->Position = v1; s_VertexBufferPtr->Color = color; s_VertexBufferPtr->TexCoords = t1; s_VertexBufferPtr->TexIndex = texIndex; s_VertexBufferPtr++;
+        s_VertexBufferPtr->Position = v2; s_VertexBufferPtr->Color = color; s_VertexBufferPtr->TexCoords = t2; s_VertexBufferPtr->TexIndex = texIndex; s_VertexBufferPtr++;
+        s_VertexBufferPtr->Position = v3; s_VertexBufferPtr->Color = color; s_VertexBufferPtr->TexCoords = t3; s_VertexBufferPtr->TexIndex = texIndex; s_VertexBufferPtr++;
 
         s_IndexCount += 6;
         s_Stats.QuadCount++;
     }
 
+    void Renderer::ResetStats() {
+        s_Stats.DrawCalls = 0;
+        s_Stats.QuadCount = 0;
+    }
+
     void Renderer::DrawColorQuad(const glm::vec2& position, const glm::vec2& size, const glm::vec4& color, float rotation) {
-        if (position.x + size.x < s_CameraBounds.x || position.x > s_CameraBounds.z ||
-        position.y + size.y < s_CameraBounds.y || position.y > s_CameraBounds.w) {
-                return;
-        }
-        if (s_IndexCount >= MAX_INDICES) {
-            EndScene();
-            s_IndexCount = 0;
-            s_VertexBufferPtr = s_VertexBufferBase.data();
-            s_TextureSlotIndex = 1;
-        }
-
-        float texIndex = 0.0f;
-        glm::vec2 v0, v1, v2, v3;
-
-        if (rotation == 0.0f) {
-            v0 = position;
-            v1 = {position.x + size.x, position.y};
-            v2 = {position.x + size.x, position.y + size.y};
-            v3 = {position.x, position.y + size.y};
-        } else {
-            float rad = glm::radians(rotation);
-            float cosA = std::cos(rad);
-            float sinA = std::sin(rad);
-
-            glm::vec2 offset = size * 0.5f;
-            glm::vec2 center = position + offset;
-
-            glm::vec2 local0 = -offset;
-            glm::vec2 local1 = {size.x - offset.x, -offset.y};
-            glm::vec2 local2 = {size.x - offset.x, size.y - offset.y};
-            glm::vec2 local3 = {-offset.x, size.y - offset.y};
-
-            v0 = center + glm::vec2(local0.x * cosA - local0.y * sinA, local0.x * sinA + local0.y * cosA);
-            v1 = center + glm::vec2(local1.x * cosA - local1.y * sinA, local1.x * sinA + local1.y * cosA);
-            v2 = center + glm::vec2(local2.x * cosA - local2.y * sinA, local2.x * sinA + local2.y * cosA);
-            v3 = center + glm::vec2(local3.x * cosA - local3.y * sinA, local3.x * sinA + local3.y * cosA);
-        }
-
-        s_VertexBufferPtr->Position = v0; s_VertexBufferPtr->Color = color; s_VertexBufferPtr->TexCoords = {0.0f, 0.0f}; s_VertexBufferPtr->TexIndex = texIndex; s_VertexBufferPtr++;
-        s_VertexBufferPtr->Position = v1; s_VertexBufferPtr->Color = color; s_VertexBufferPtr->TexCoords = {1.0f, 0.0f}; s_VertexBufferPtr->TexIndex = texIndex; s_VertexBufferPtr++;
-        s_VertexBufferPtr->Position = v2; s_VertexBufferPtr->Color = color; s_VertexBufferPtr->TexCoords = {1.0f, 1.0f}; s_VertexBufferPtr->TexIndex = texIndex; s_VertexBufferPtr++;
-        s_VertexBufferPtr->Position = v3; s_VertexBufferPtr->Color = color; s_VertexBufferPtr->TexCoords = {0.0f, 1.0f}; s_VertexBufferPtr->TexIndex = texIndex; s_VertexBufferPtr++;
-
-        s_IndexCount += 6;
-        s_Stats.QuadCount++;
+        DrawQuad(s_WhiteTextureID, position, size, rotation, color, {0.5f, 0.5f}, false, false);
     }
 
     void Renderer::DrawText(const Font& font, const std::string& text, const glm::vec2& position, float scale, const glm::vec4& color) {
@@ -411,7 +358,7 @@ namespace voidx {
                 { x0 / texW, y1 / texH }
             };
 
-            DrawQuadUV(tex, quadPos, quadSize, uv, color);
+            DrawQuadUV(tex.GetID(), quadPos, quadSize, uv, color);
             x += g->xadvance * scale;
         }
     }

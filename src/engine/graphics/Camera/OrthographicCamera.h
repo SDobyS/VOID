@@ -1,6 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <algorithm>
+#include <limits>
 
 namespace voidx {
     class OrthographicCamera {
@@ -22,10 +23,33 @@ namespace voidx {
         [[nodiscard]] const glm::mat4& GetViewProjectionMatrix() const { return m_ViewProjection; }
 
         [[nodiscard]] glm::vec4 GetVisibleBounds() const {
-            float minX = m_Position.x + std::min(m_Left, m_Right) / m_Zoom;
-            float maxX = m_Position.x + std::max(m_Left, m_Right) / m_Zoom;
-            float minY = m_Position.y + std::min(m_Bottom, m_Top) / m_Zoom;
-            float maxY = m_Position.y + std::max(m_Bottom, m_Top) / m_Zoom;
+            glm::vec2 center(m_Position.x, m_Position.y);
+            float rad = glm::radians(m_Rotation);
+            float cosA = std::cos(rad);
+            float sinA = std::sin(rad);
+
+            glm::vec2 corners[4] = {
+                {m_Left / m_Zoom, m_Bottom / m_Zoom},
+                {m_Right / m_Zoom, m_Bottom / m_Zoom},
+                {m_Right / m_Zoom, m_Top / m_Zoom},
+                {m_Left / m_Zoom, m_Top / m_Zoom}
+            };
+
+            float minX = std::numeric_limits<float>::max();
+            float maxX = std::numeric_limits<float>::lowest();
+            float minY = std::numeric_limits<float>::max();
+            float maxY = std::numeric_limits<float>::lowest();
+
+            for (const auto& c : corners) {
+                glm::vec2 rotated(
+                    center.x + c.x * cosA - c.y * sinA,
+                    center.y + c.x * sinA + c.y * cosA
+                );
+                minX = std::min(minX, rotated.x);
+                maxX = std::max(maxX, rotated.x);
+                minY = std::min(minY, rotated.y);
+                maxY = std::max(maxY, rotated.y);
+            }
             return { minX, minY, maxX, maxY };
         }
 

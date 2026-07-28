@@ -5,6 +5,7 @@
 #include <fstream>
 #include <algorithm>
 #include <nlohmann/json.hpp>
+#include "SceneRenderer.h"
 #include <filesystem>
 
 namespace fs = std::filesystem;
@@ -179,7 +180,16 @@ namespace voidx {
                 glm::vec2 pos(static_cast<float>(x * ts->tileWidth), static_cast<float>(y * ts->tileHeight));
                 glm::vec2 size(static_cast<float>(ts->tileWidth), static_cast<float>(ts->tileHeight));
 
-                Renderer::DrawQuadUV(*ts->texture, pos, size, uvs, {1, 1, 1, 1});
+                QuadRenderCommand cmd;
+                cmd.TextureID = ts->texture->GetID();
+                cmd.Position = pos;
+                cmd.Size = size;
+                cmd.UV[0] = uvs[0]; cmd.UV[1] = uvs[1]; cmd.UV[2] = uvs[2]; cmd.UV[3] = uvs[3];
+                cmd.Color = {1, 1, 1, 1};
+                cmd.UseUVs = true;
+                cmd.Pivot = {0.0f, 0.0f};
+                cmd.ZOrder = m_Layer;
+                SceneRenderer::Submit(cmd);
             }
         }
     }

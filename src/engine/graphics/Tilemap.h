@@ -40,6 +40,7 @@ namespace voidx {
 
         void Draw();
         void DrawLayer(const std::string& layerName);
+        void SetLayer(float layer) { m_Layer = layer; }
 
         const std::vector<TilemapObject>& GetObjects() const { return m_Objects; }
         int GetWidth() const { return m_MapWidth; }
@@ -52,6 +53,7 @@ namespace voidx {
         int m_TileSize = 32;
         int m_MapWidth = 0;
         int m_MapHeight = 0;
+        float m_Layer = 0.0f;
 
         std::vector<TilesetInfo> m_Tilesets;
         std::vector<TilemapLayer> m_Layers;

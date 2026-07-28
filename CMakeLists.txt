@@ -109,6 +109,7 @@ set(ENGINE_SOURCES
         src/engine/graphics/ParticleSystem.cpp
         src/engine/graphics/Tilemap.cpp
         src/engine/graphics/AnimatedSprite.cpp
+        src/engine/graphics/SceneRenderer.cpp
 
         src/engine/utils/Log.cpp
         src/engine/utils/SystemInfo.cpp

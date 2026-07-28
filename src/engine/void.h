@@ -22,6 +22,8 @@
 #include "graphics/Texture.h"
 #include "graphics/AnimatedSprite.h"
 #include "graphics/Tilemap.h"
+#include "graphics/SceneRenderer.h"
+#include "graphics/RenderCommand.h"
 
 // Third-party Libraries
 #include <glm/glm.hpp>
