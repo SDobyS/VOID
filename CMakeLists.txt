@@ -88,11 +88,7 @@ target_include_directories(imgui PUBLIC
 
 target_link_libraries(imgui PUBLIC SDL3::SDL3 OpenGL::GL)
 
-add_executable(VOID
-        # Your Project
-
-
-        # Libs
+set(ENGINE_SOURCES
         src/engine/Window.cpp
         src/engine/ImGuiLayer.cpp
         src/engine/stb.cpp
@@ -100,7 +96,6 @@ add_executable(VOID
         src/engine/WindowsGPU.cpp
         src/engine/AssetManager.cpp
 
-        # Graphics
         src/engine/graphics/Mesh.cpp
         src/engine/graphics/Shader.cpp
         src/engine/graphics/Texture.cpp
@@ -115,11 +110,14 @@ add_executable(VOID
         src/engine/graphics/Tilemap.cpp
         src/engine/graphics/AnimatedSprite.cpp
 
-        # Utils
         src/engine/utils/Log.cpp
         src/engine/utils/SystemInfo.cpp
         src/engine/utils/Time.cpp
 )
+
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/sources.txt" GAME_SOURCES)
+
+add_executable(VOID ${ENGINE_SOURCES} ${GAME_SOURCES})
 
 target_link_libraries(VOID PRIVATE
         SDL3::SDL3

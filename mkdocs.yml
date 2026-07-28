@@ -1,0 +1,93 @@
+site_name: VOID Engine
+site_description: Lightweight 2D Game Engine written in Modern C++20
+site_url: https://sdobys.github.io/VOID/
+repo_url: https://github.com/SDobyS/VOID
+repo_name: SDobyS/VOID
+edit_uri: ""
+
+theme:
+  name: material
+  language: en
+  logo: assets/logo.png
+  favicon: assets/favicon.png
+
+  palette:
+
+    - scheme: default
+      primary: black
+      accent: deep purple
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+
+    - scheme: slate
+      primary: black
+      accent: deep purple
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.tracking
+
+    - toc.follow
+
+    - content.code.copy
+    - content.code.annotate
+
+    - search.highlight
+    - search.suggest
+    - search.share
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - footnotes
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.details
+  - pymdownx.emoji
+
+nav:
+  - Home: index.md
+
+  - Getting Started:
+      - Installation: getting-started.md
+      - Quick Start: quick-start.md
+
+  - Engine:
+      - Architecture: architecture.md
+      - Window: window.md
+      - Input: input.md
+      - Camera: camera.md
+      - Asset Manager: assets.md
+
+  - Graphics:
+      - Renderer: renderer.md
+      - Texture: texture.md
+      - Sprite: sprite.md
+      - Animation: animation.md
+      - AnimatedSprite: animated-sprite.md
+      - Fonts: fonts.md
+      - Tilemap: tilemap.md
+      - Particles: particles.md
+      - Framebuffer: framebuffer.md
+
+  - API:
+      - API Reference: api.md
+
+  - FAQ: faq.md

@@ -1,7 +1,6 @@
-# VOID
+<h1 align="center">VOID</h1>
 
 <p align="center">
-
 <img src="https://img.shields.io/badge/C%2B%2B-20-blue">
 <img src="https://img.shields.io/badge/OpenGL-4.6-success">
 <img src="https://img.shields.io/badge/SDL-3-orange">
@@ -10,7 +9,6 @@
 <img src="https://img.shields.io/badge/ImGui-Latest-purple">
 <img src="https://img.shields.io/badge/CMake-3.25+-blueviolet">
 <img src="https://img.shields.io/badge/License-MIT-yellow">
-
 </p>
 
 <p align="center">
@@ -19,6 +17,10 @@ A lightweight 2D game engine written in modern C++20 using SDL3 and OpenGL.
 
 <p align="center">
 Built from scratch to explore graphics programming, engine architecture and modern rendering techniques without relying on existing game engines.
+</p>
+
+<p align="center">
+📖 <a href="https://sdobys.github.io/VOID/">Full Documentation</a>
 </p>
 
 ---
@@ -110,9 +112,9 @@ Current renderer limits per batch:
 
 | Resource | Limit |
 |----------|-------:|
-| Quads | 20,000 |
-| Vertices | 80,000 |
-| Indices | 120,000 |
+| Quads | 100,000 |
+| Vertices | 400,000 |
+| Indices | 600,000 |
 | Texture Slots | 32* |
 
 \* Hardware dependent.
@@ -215,7 +217,7 @@ The engine is responsible for managing the graphics API, GPU resources and rende
 
 ---
 
-# ⚙️ How It Works
+## ⚙️ How It Works
 
 VOID provides a simple, Raylib-inspired API while internally using a modern C++20 architecture built around RAII, modular design and hardware-accelerated rendering.
 
@@ -235,7 +237,7 @@ Internally, rendering is fully GPU accelerated through OpenGL 4.6.
 
 ---
 
-# 🏗 Engine Architecture
+## 🏗 Engine Architecture
 
 The engine is divided into independent modules, each responsible for a single subsystem.
 
@@ -262,223 +264,11 @@ Higher-level systems such as sprites, animations, tilemaps and particles are bui
 
 This architecture keeps responsibilities isolated while making the engine easier to extend and maintain.
 
----
-
-# 📦 Core Modules
-
-## Window
-
-Responsible for:
-
-- SDL3 initialization
-- OpenGL context creation
-- Window creation
-- Fullscreen switching
-- High-DPI support
-- VSync
-- Monitor detection
-- Swap buffers
-- Event polling
+For a deeper breakdown of every module (Renderer, Asset Manager, Sprite, Animation, Tilemap, Particles, Framebuffer, Input, Camera...), see the [full documentation](https://sdobys.github.io/VOID/).
 
 ---
 
-## Renderer
-
-The Renderer is the main rendering interface exposed to the game.
-
-Responsibilities include:
-
-- Scene management
-- Camera handling
-- Quad submission
-- Text rendering
-- Particle rendering
-- Tilemap rendering
-- Renderer statistics
-
-The renderer itself does not issue immediate draw calls.
-
-Instead, it forwards geometry to the Batch Renderer.
-
----
-
-## Batch Renderer
-
-The Batch Renderer is the heart of the graphics pipeline.
-
-Rather than drawing every sprite immediately, geometry is accumulated into large GPU buffers.
-
-When necessary, the renderer automatically flushes the current batch.
-
-Advantages include:
-
-- Thousands of sprites per draw call
-- Reduced CPU overhead
-- Automatic texture slot management
-- Dynamic vertex buffers
-- Automatic batch flushing
-
-Current limits:
-
-- 20,000 quads
-- 80,000 vertices
-- 120,000 indices
-- Up to 32 texture slots
-
----
-
-## Asset Manager
-
-Loading the same texture or shader multiple times wastes both memory and loading time.
-
-The Asset Manager automatically caches resources.
-
-Supported assets:
-
-- Texture
-- Shader
-- Font
-
-Internally resources are stored using `std::shared_ptr`, allowing safe sharing across multiple engine systems.
-
----
-
-## Sprite System
-
-Sprites are lightweight rendering objects that encapsulate:
-
-- Texture
-- Position
-- Size
-- Rotation
-- Pivot
-- Color tint
-- Flip state
-
-Sprites are submitted directly to the Batch Renderer.
-
----
-
-## Animation System
-
-Animations simplify sprite sheet playback.
-
-Features include:
-
-- Frame-based animation
-- Variable playback speed
-- Arbitrary frame count
-- Configurable frame size
-- Multiple rows
-- Automatic UV generation
-
-AnimatedSprite combines Sprite and Animation into a single high-level object.
-
----
-
-## Font System
-
-Fonts are generated into bitmap atlases during loading using **stb_truetype**.
-
-Features:
-
-- UTF-ready rendering pipeline
-- Bitmap atlas generation
-- Cached glyphs
-- Scaling
-- Color tint
-- High-performance text rendering
-
----
-
-## Tilemap System
-
-Tilemaps are loaded directly from **Tiled JSON** maps.
-
-Supported:
-
-- CSV layers
-- Embedded tilesets
-- Multiple visible layers
-
-Current limitations:
-
-- External TSX files are not yet supported.
-- Infinite maps are not supported.
-
----
-
-## Particle System
-
-The particle system uses object pooling.
-
-Instead of allocating particles every frame, inactive particles are reused.
-
-Benefits:
-
-- No runtime allocations
-- Stable performance
-- Predictable memory usage
-
-Supported particle properties include:
-
-- Lifetime
-- Velocity
-- Gravity
-- Rotation
-- Scale
-- Color interpolation
-
----
-
-## Framebuffer
-
-Framebuffers allow rendering into textures instead of directly to the screen.
-
-Typical use cases:
-
-- Render-to-texture
-- Post-processing
-- Off-screen rendering
-- Mini-maps
-- Lighting effects
-
----
-
-## Input System
-
-The Input module completely hides SDL from the public API.
-
-Supported functionality:
-
-- Keyboard state
-- Mouse state
-- Key pressed
-- Key released
-- Mouse position
-- Mouse buttons
-
-Input is updated once every frame.
-
----
-
-## Dear ImGui Integration
-
-VOID includes an optional Dear ImGui debug layer.
-
-It can be enabled during window creation and toggled at runtime.
-
-The debug interface is useful for:
-
-- Renderer statistics
-- FPS monitoring
-- Camera debugging
-- Runtime inspection
-- Development tools
-
----
-
-# 🧩 Resource Management
+## 🧩 Resource Management
 
 All GPU resources follow RAII principles.
 
@@ -506,7 +296,6 @@ This design makes ownership explicit while avoiding memory leaks.
 ---
 
 <p align="center">
-  <img src="docs/cat.gif" width="800">
+  <img src="docs/Images/cat.gif" width="800">
 </p>
-
 
